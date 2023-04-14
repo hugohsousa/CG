@@ -18,7 +18,7 @@ class Group {
     public:
         Group();
         Group(int id);
-        void setId(int id);
+        void setId(int n);
         int getId();
         virtual void apply();
 };
@@ -29,7 +29,7 @@ class Model : public Group {
     public:
         Model();
         Model(string file);
-        void setFile(string file);
+        void setFile(string f);
         string getFile();
         void apply();
 };
@@ -40,9 +40,9 @@ class Translate : public Group {
     public:
         Translate();
         Translate(float x, float y, float z);
-        void setX(float x);
-        void setY(float y);
-        void setZ(float z);
+        void setX(float n);
+        void setY(float n);
+        void setZ(float n);
         float getX();
         float getY();
         float getZ();
@@ -55,10 +55,10 @@ class Rotate : public Group {
     public:
         Rotate();
         Rotate(float x, float y, float z, float angle);
-        void setX(float x);
-        void setY(float y);
-        void setZ(float a);
-        void setAngle(int angle);
+        void setX(float n);
+        void setY(float n);
+        void setZ(float n);
+        void setAngle(int n);
         float getX();
         float getY();
         float getZ();
@@ -72,9 +72,9 @@ class Scale : public Group {
     public:
         Scale();
         Scale(float x, float y, float z);
-        void setX(float x);
-        void setY(float y);
-        void setZ(float z);
+        void setX(float n);
+        void setY(float n);
+        void setZ(float n);
         float getX();
         float getY();
         float getZ();
