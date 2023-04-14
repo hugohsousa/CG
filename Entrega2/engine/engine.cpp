@@ -50,22 +50,24 @@ float near = 1.0f;
 float far = 1000.0f;
 
 // Velocidade da câmera
-float speed = 0.1;
+float speed = 0.8;
 float rotSpeed = 0.0005;
 
-float a = 0.0f, b = 0.0f, r = 0.0f;
+// Angulo para movimentar a camera
+bool warp = false;
+float ang = 0;
+float ang1 = -5000;
+//Verificar se o rato está na janela
+bool mouseCaptured = true; 
 
-// Ficheiros e vértices
-//std::vector<float> vertex;
-//std::vector<string> files;
-
+// Estrutura para guardar os grupos
 typedef struct node{
     Group* g;
     string label;
     vector<struct node*> next;
 } *Tree;
 
-//file struct
+//File struct
 typedef struct ficheiro{
     string name;
     vector<float> vertex;
@@ -79,7 +81,6 @@ int n_group = 0;
 //Função que lê os ficheiros e desenha os vértices
 File readFile(string file)
 {
-    printf("readfile");
 	// Variáveis
 	float x, y, z;
 	string linha;
@@ -99,7 +100,6 @@ File readFile(string file)
         vbo->vertex.push_back(x);
         vbo->vertex.push_back(y);
         vbo->vertex.push_back(z);
-        printf("x: %f y: %f z: %f\n",x,y,z);
 	}
 
     vbo->size = vbo->vertex.size()/3;
@@ -118,7 +118,7 @@ File readFile(string file)
 //Função para parse dos grupos
 void groupParser(XMLElement *pGroup, Tree group) {
     
-    //Variáveis para ajudar o parsing
+    //Variáveis
     float x,y,z,angle = 0.0f;
     string file = "";
     
@@ -154,7 +154,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     group->next.push_back(aux);
                 }
                 //Procurar escala
-                if(strcmp(pSubGroup->Value(),"scale") == 0) {
+                if(strcmp(pTransform->Value(),"scale") == 0) {
                     x = float(pTransform->FindAttribute("x")->FloatValue());
                     y = float(pTransform->FindAttribute("y")->FloatValue());
                     z = float(pTransform->FindAttribute("z")->FloatValue());
@@ -173,7 +173,6 @@ void groupParser(XMLElement *pGroup, Tree group) {
             XMLElement* pModel = pSubGroup->FirstChildElement("model");
             while(pModel != NULL){
                 const char * model = pModel->FindAttribute("file")->Value();
-                printf("%s\n",model);
                 //Criar árvore auxiliar e guardar o ficheiro (modelo)
                 Tree aux = new struct node;
                 aux->g = new Model(string(model));
@@ -202,14 +201,13 @@ int readXML()
 {
 	// Abre File
 	XMLDocument config;
-	XMLError eResult = config.LoadFile("test_2_3.xml");
+	XMLError eResult = config.LoadFile("solar.xml");
 
 	// Procura a root do XML
 	XMLElement *pRootElement = config.RootElement();
 	// Termina se não existir a root
 	if (pRootElement == NULL)
 		return -1;
-    printf("ssssss");
     // Procura o elemento window
 	XMLElement *pWindow = pRootElement->FirstChildElement("window");
 	// Guarda os valores da janela
@@ -268,7 +266,6 @@ int readXML()
     groupTree->next.clear();
 
     // procura o elemento group
-    printf("cameraout\n");
     XMLElement *pGroup = pRootElement->FirstChildElement("group");
 
     //Percorre os grupos
@@ -280,15 +277,10 @@ int readXML()
         groupTree->next.push_back(group);
         pGroup = pGroup->NextSiblingElement();
     }
-
-	r = sqrt(pow(px, 2) + pow(py, 2) + pow(pz, 2));
-	a = acos((px * px) / ((sqrt(px * px)) * sqrt(px * px + py * py)));
-	b = acos((px * px) / ((sqrt(px * px)) * sqrt(px * px + pz * pz)));
-
 	return 1;
 }
 
-//Função que lê a estrutura de dado e desenha a cena
+//Função que lê a estrutura de dados e desenha a cena
 int readTree(Tree groups) {
     if(groups == NULL) return -1;
 
@@ -366,49 +358,55 @@ void changeSize(int w, int h)
 void processSpecialKeys(int key, int x, int y)
 {
 	switch (key) {
-        case GLUT_KEY_RIGHT:
-            a += 0.1; break;
-        case GLUT_KEY_LEFT:
-            a -= 0.1; break;
         case GLUT_KEY_UP:
-            b += 0.1f;
-            if (b > 1.5f)
-                b = 1.5f;
+            px += lx * speed;
+            py += ly * speed;
+            pz += lz * speed;
             break;
         case GLUT_KEY_DOWN:
-            b -= 0.1f;
-            if (b < -1.5f)
-                b = -1.5f;
+            px -= lx * speed;
+            py -= ly * speed;
+            pz -= lz * speed;
             break;
-    }
-
-	px = r * cos(b) * sin(a);
-    py = r * sin(b);
-    pz = r * cos(b) * cos(a);
-
+        case GLUT_KEY_LEFT:
+            px += lz * speed;
+            pz -= lx * speed;
+            break;
+        case GLUT_KEY_RIGHT:
+            px -= lz * speed;
+            pz += lx * speed;
+            break;
+        }
 }
 
 void processNormalKeys(unsigned char key, int x, int y)
 {
+    //ESC Destroy window
     if (key == 27)
     {
         glutDestroyWindow(window);
         exit(0);
     }
-    switch (key) {
-    case 'w':
-        r -= 0.1f;
-        if (r < 0.1f)
-            r = 0.1f;
-        break;
-    case 's':
-        r += 0.1f;
-        break;
-    }
+}
 
-    px = r * cos(b) * sin(a);
-    py = r * sin(b);
-    pz = r * cos(b) * cos(a);
+void processMouse(int x, int y) {
+    if (warp)
+    {
+        warp = false;
+        return;
+    }
+    int dx = x - 100; 
+    int dy = y - 100;
+    ang = ang + dx * rotSpeed;
+    ang1 = ang1 + dy * rotSpeed;
+    lx = sin(ang1)*sin(ang);
+    ly = -cos(ang1);
+    lz = -sin(ang1)*cos(ang);
+    if (mouseCaptured)
+    {
+        warp = true;
+        glutWarpPointer(100, 100); 
+    }	
 }
 
 
@@ -421,7 +419,7 @@ void renderScene(void)
 	// set the camera
 	glLoadIdentity();
 	gluLookAt(px, py, pz,
-			  lx, ly, lz,
+			  px + lx, py + ly, pz + lz,
 			  ux, uy, uz);
 
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -449,9 +447,7 @@ void renderScene(void)
 
 int main(int argc, char **argv)
 {
-	// Ler o ficheiro com a configuração
-	// Init GLUT and the window
-    
+	// Init GLUT and the window 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);
 	glutInitWindowPosition(100, 100);
@@ -469,6 +465,7 @@ int main(int argc, char **argv)
 	// put here the registration of the keyboard callbacks
 	glutSpecialFunc(processSpecialKeys);
 	glutKeyboardFunc(processNormalKeys);
+    glutPassiveMotionFunc(processMouse);
     
 	//  OpenGL settings
 	glEnable(GL_DEPTH_TEST);
