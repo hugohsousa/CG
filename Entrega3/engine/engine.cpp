@@ -119,7 +119,8 @@ File readFile(string file)
 void groupParser(XMLElement *pGroup, Tree group) {
     
     //Variáveis
-    float x,y,z,angle = 0.0f;
+    float x,y,z,angle,time = 0.0f;
+    bool align;
     string file = "";
     
     XMLElement *pSubGroup = pGroup->FirstChildElement();
@@ -130,9 +131,19 @@ void groupParser(XMLElement *pGroup, Tree group) {
             while(pTransform != NULL) {
                 //Procurar translação
                 if(strcmp(pTransform->Value(),"translate") == 0) {
-                    x = float(pTransform->FindAttribute("x")->FloatValue());
-                    y = float(pTransform->FindAttribute("y")->FloatValue());
-                    z = float(pTransform->FindAttribute("z")->FloatValue());
+                    time = float(pTransform->FindAttribute("time")->FloatValue());
+                    align = float(pTransform->FindAttribute("align")->BoolValue());
+                    //Contar o número de pontos >= 4
+                    int number = 0;
+                    //Parse nos pontos da curva 
+                    XMLElement *pPoint = pTransform->FirstChildElement();
+                    while(pPoint != NULL) {
+                        //Guardar os pontos
+                        x = float(pPoint->FindAttribute("x")->FloatValue());
+                        y = float(pPoint->FindAttribute("y")->FloatValue());
+                        z = float(pPoint->FindAttribute("z")->FloatValue());
+                       pPoint = pPoint->NextSiblingElement(); 
+                    }
                     //Criar árvore auxiliar e guardar translação 
                     Tree aux = new struct node;
                     aux->g = new Translate(x,y,z);
@@ -146,6 +157,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     y = float(pTransform->FindAttribute("y")->FloatValue());
                     z = float(pTransform->FindAttribute("z")->FloatValue());
                     angle = float(pTransform->FindAttribute("angle")->FloatValue());
+                    time = float(pTransform->FindAttribute("time")->FloatValue());
                     //Criar árvore auxiliar e guardar a rotação
                     Tree aux = new struct node;
                     aux->g = new Rotate(x,y,z,angle);
