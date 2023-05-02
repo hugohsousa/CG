@@ -91,20 +91,20 @@ void getGlobalCatmullRomPoint(float gt, float* pos, float* deriv, vector<vector<
     t = t - index; // where within  the segment
 
     // indices store the points
-
+    printf("Debug classes\n");
     int indices[4];
     indices[0] = (index + nPontos-1)%nPontos;
     indices[1] = (indices[0]+1)%nPontos;
     indices[2] = (indices[1]+1)%nPontos;
     indices[3] = (indices[2]+1)%nPontos;
 
+    printf("Debug classes\n");
 
     vector <vector<float>> pvec = {pontosControlo[indices[0]], pontosControlo[indices[1]], pontosControlo[indices[2]], pontosControlo[indices[3]]};
 
 
+    printf("Debug classes\n");
     getCatmullRomPoint(t,pvec, pos, deriv);
-
-
 
     //getCatmullRomPoint(t,pontosControlo[indices[i]], pos, deriv);
 }

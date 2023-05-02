@@ -5,7 +5,7 @@ PROJECT(engine)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_executable(${PROJECT_NAME} engine.cpp tinyxml/tinyxml2.cpp tinyxml/tinyxml2.h classes.cpp classes.h)
+add_executable(${PROJECT_NAME} engine.cpp tinyxml/tinyxml2.cpp tinyxml/tinyxml2.h classes.cpp classes.h classes/catmull.cpp headers/catmull.h)
 
 find_package(OpenGL REQUIRED)
 include_directories(${OpenGL_INCLUDE_DIRS})

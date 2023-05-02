@@ -1,3 +1,4 @@
+#include <tuple>
 #include <vector>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
@@ -26,6 +27,7 @@ void Model :: apply() {};
 Translate :: Translate() { 
     x = y = z = time = 0.0f;
     curve = vector<float>();
+    align = false;
 }
 
 Translate :: Translate(float x, float y, float z,float time, bool align, vector<float> curve) {
@@ -65,7 +67,7 @@ vector<vector<float>> Translate :: getCurve(){
 void Translate :: apply() { 
    float time = (glutGet(GLUT_ELAPSED_TIME))/((float) 1000);
 
-    if (time != 0.0f) {
+    if (getTime() != 0.0f) {
 
         float pos[4];
         float deriv[4];
@@ -73,10 +75,8 @@ void Translate :: apply() {
         float Y[4] = {0,1,0};
         float Z[4];
 
-        //if(render){drawOrbita(translate.getOrbita());}
-
-        float gt = ((getCurve().size())+time)/time;
-
+        float gt = ((getCurve().size())+time)/getTime();
+        printf("gt: %f", gt);
         getGlobalCatmullRomPoint(gt, pos, deriv, getCurve());
 
         //cout  << pos[0]  << pos[1]<<pos[2] << endl;

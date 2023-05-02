@@ -126,7 +126,6 @@ void groupParser(XMLElement *pGroup, Tree group) {
     float x,y,z,angle,time = 0.0f;
     bool align = false;
     string file = "";
-    
     XMLElement *pSubGroup = pGroup->FirstChildElement();
     
     while(pSubGroup != NULL) {
@@ -138,7 +137,9 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     //Contar o número de pontos >= 4
                     int number = 0;
                     //Parse nos pontos da curva 
+                    printf("Debug1\n");
                     XMLElement *pPoint = pTransform->FirstChildElement();
+                    printf("Debug2\n");
                     vector<float> vertices;
                     if(pPoint != NULL) {
                         while(pPoint != NULL) {
@@ -157,6 +158,8 @@ void groupParser(XMLElement *pGroup, Tree group) {
                         x = float(pTransform->FindAttribute("x")->FloatValue());
                         y = float(pTransform->FindAttribute("y")->FloatValue());
                         z = float(pTransform->FindAttribute("z")->FloatValue());
+                        time = 0.0f;
+                        align = false;
                     }
                     //Criar árvore auxiliar e guardar translação 
                     Tree aux = new struct node;
@@ -167,11 +170,13 @@ void groupParser(XMLElement *pGroup, Tree group) {
                 }
                  //Procurar rotação
                 if(strcmp(pTransform->Value(),"rotate") == 0) {
+                    printf("Antes da rotação\n");
                     x = float(pTransform->FindAttribute("x")->FloatValue());
                     y = float(pTransform->FindAttribute("y")->FloatValue());
                     z = float(pTransform->FindAttribute("z")->FloatValue());
                     angle = float(pTransform->FindAttribute("angle")->FloatValue());
-                    time = float(pTransform->FindAttribute("time")->FloatValue());
+                    //time = float(pTransform->FindAttribute("time")->FloatValue());
+                    printf("Depois da rotação\n");
                     //Criar árvore auxiliar e guardar a rotação
                     Tree aux = new struct node;
                     aux->g = new Rotate(x,y,z,angle,time);
@@ -299,9 +304,11 @@ int readXML()
         Tree group = new struct node;
         group->g = new Group(n_group++); 
         group->label = "group";
+        printf("Antes do Grupo\n");
         groupParser(pGroup, group);
         groupTree->next.push_back(group);
         pGroup = pGroup->NextSiblingElement();
+        printf("Depois do grupo\n");
     }
 	return 1;
 }
