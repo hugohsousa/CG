@@ -38,19 +38,22 @@ class Model : public Group {
 class Translate : public Group {
     private:
         float x,y,z,time;
+        bool align;
         vector<float> curve;
     public:
         Translate();
-        Translate(float x, float y, float z,float time,vector<float> curve);
+        Translate(float x, float y, float z,float time,bool align,vector<float> curve);
         void setX(float n);
         void setY(float n);
         void setZ(float n);
         void setTime(float n);
+        void setAlign(bool n);
         void setCurve(vector<float> n);
         float getX();
         float getY();
         float getZ();
         float getTime();
+        bool getAlign();
         vector<vector<float>> getCurve();
         void apply();
 };

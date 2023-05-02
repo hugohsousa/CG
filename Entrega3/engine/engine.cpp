@@ -120,7 +120,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
     
     //Variáveis
     float x,y,z,angle,time = 0.0f;
-    bool align;
+    bool align = false;
     string file = "";
     
     XMLElement *pSubGroup = pGroup->FirstChildElement();
@@ -131,49 +131,35 @@ void groupParser(XMLElement *pGroup, Tree group) {
             while(pTransform != NULL) {
                 //Procurar translação
                 if(strcmp(pTransform->Value(),"translate") == 0) {
-                    x = float(pTransform->FindAttribute("x")->FloatValue());
-                    y = float(pTransform->FindAttribute("y")->FloatValue());
-                    z = float(pTransform->FindAttribute("z")->FloatValue());
-                    //Criar árvore auxiliar e guardar translação 
-                    Tree aux = new struct node;
-                    aux->g = new Translate(x,y,z);
-                    aux->label = "translate";
-                    aux->next.clear();
-                    group->next.push_back(aux);
-                }
-                //Procurar translação
-                if(strcmp(pTransform->Value(),"translate") == 0) {
                     //Contar o número de pontos >= 4
                     int number = 0;
                     //Parse nos pontos da curva 
                     XMLElement *pPoint = pTransform->FirstChildElement();
+                    vector<float> vertices;
                     if(pPoint != NULL) {
                         while(pPoint != NULL) {
                             //Guardar os pontos
                             x = float(pPoint->FindAttribute("x")->FloatValue());
                             y = float(pPoint->FindAttribute("y")->FloatValue());
                             z = float(pPoint->FindAttribute("z")->FloatValue());
+                            vertices.push_back(x);
+                            vertices.push_back(y);
+                            vertices.push_back(z);
                             pPoint = pPoint->NextSiblingElement(); 
                         }
                         time = float(pTransform->FindAttribute("time")->FloatValue());
                         align = float(pTransform->FindAttribute("align")->BoolValue());
-                        //Criar árvore auxiliar e guardar translação 
-                        Tree aux = new struct node;
-                        aux->g = new Translate(x,y,z);
-                        aux->label = "translate";
-                        aux->next.clear();
-                        group->next.push_back(aux);
                     } else {
                         x = float(pTransform->FindAttribute("x")->FloatValue());
                         y = float(pTransform->FindAttribute("y")->FloatValue());
                         z = float(pTransform->FindAttribute("z")->FloatValue());
-                        //Criar árvore auxiliar e guardar translação 
-                        Tree aux = new struct node;
-                        aux->g = new Translate(x,y,z);
-                        aux->label = "translate";
-                        aux->next.clear();
-                        group->next.push_back(aux);
                     }
+                    //Criar árvore auxiliar e guardar translação 
+                    Tree aux = new struct node;
+                    aux->g = new Translate(x,y,z,time,align,vertices);
+                    aux->label = "translate";
+                    aux->next.clear();
+                    group->next.push_back(aux);
                 }
                  //Procurar rotação
                 if(strcmp(pTransform->Value(),"rotate") == 0) {

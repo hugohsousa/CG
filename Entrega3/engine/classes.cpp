@@ -28,22 +28,25 @@ Translate :: Translate() {
     curve = vector<float>();
 }
 
-Translate :: Translate(float x, float y, float z,float time, vector<float> curve) {
+Translate :: Translate(float x, float y, float z,float time, bool align, vector<float> curve) {
     setX(x); 
     setY(y);
     setZ(z);
     setTime(time);
+    setAlign(align);
     setCurve(curve);
 }
 void Translate :: setX(float n) { x = n; }
 void Translate :: setY(float n) { y = n; }
 void Translate :: setZ(float n) { z = n; }
 void Translate :: setTime(float n) { time = n; }
+void Translate :: setAlign(bool n) { align = n; }
 void Translate :: setCurve(vector<float> n) { curve = n; }
 float Translate :: getX() { return x; }
 float Translate :: getY() { return y; }
 float Translate :: getZ() { return z; }
 float Translate :: getTime() { return time; }
+bool Translate :: getAlign() { return align; }
 vector<vector<float>> Translate :: getCurve(){
 
     vector<vector<float>> curva;
