@@ -131,25 +131,49 @@ void groupParser(XMLElement *pGroup, Tree group) {
             while(pTransform != NULL) {
                 //Procurar translação
                 if(strcmp(pTransform->Value(),"translate") == 0) {
-                    time = float(pTransform->FindAttribute("time")->FloatValue());
-                    align = float(pTransform->FindAttribute("align")->BoolValue());
-                    //Contar o número de pontos >= 4
-                    int number = 0;
-                    //Parse nos pontos da curva 
-                    XMLElement *pPoint = pTransform->FirstChildElement();
-                    while(pPoint != NULL) {
-                        //Guardar os pontos
-                        x = float(pPoint->FindAttribute("x")->FloatValue());
-                        y = float(pPoint->FindAttribute("y")->FloatValue());
-                        z = float(pPoint->FindAttribute("z")->FloatValue());
-                       pPoint = pPoint->NextSiblingElement(); 
-                    }
+                    x = float(pTransform->FindAttribute("x")->FloatValue());
+                    y = float(pTransform->FindAttribute("y")->FloatValue());
+                    z = float(pTransform->FindAttribute("z")->FloatValue());
                     //Criar árvore auxiliar e guardar translação 
                     Tree aux = new struct node;
                     aux->g = new Translate(x,y,z);
                     aux->label = "translate";
                     aux->next.clear();
                     group->next.push_back(aux);
+                }
+                //Procurar translação
+                if(strcmp(pTransform->Value(),"translate") == 0) {
+                    //Contar o número de pontos >= 4
+                    int number = 0;
+                    //Parse nos pontos da curva 
+                    XMLElement *pPoint = pTransform->FirstChildElement();
+                    if(pPoint != NULL) {
+                        while(pPoint != NULL) {
+                            //Guardar os pontos
+                            x = float(pPoint->FindAttribute("x")->FloatValue());
+                            y = float(pPoint->FindAttribute("y")->FloatValue());
+                            z = float(pPoint->FindAttribute("z")->FloatValue());
+                            pPoint = pPoint->NextSiblingElement(); 
+                        }
+                        time = float(pTransform->FindAttribute("time")->FloatValue());
+                        align = float(pTransform->FindAttribute("align")->BoolValue());
+                        //Criar árvore auxiliar e guardar translação 
+                        Tree aux = new struct node;
+                        aux->g = new Translate(x,y,z);
+                        aux->label = "translate";
+                        aux->next.clear();
+                        group->next.push_back(aux);
+                    } else {
+                        x = float(pTransform->FindAttribute("x")->FloatValue());
+                        y = float(pTransform->FindAttribute("y")->FloatValue());
+                        z = float(pTransform->FindAttribute("z")->FloatValue());
+                        //Criar árvore auxiliar e guardar translação 
+                        Tree aux = new struct node;
+                        aux->g = new Translate(x,y,z);
+                        aux->label = "translate";
+                        aux->next.clear();
+                        group->next.push_back(aux);
+                    }
                 }
                  //Procurar rotação
                 if(strcmp(pTransform->Value(),"rotate") == 0) {
@@ -160,7 +184,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     time = float(pTransform->FindAttribute("time")->FloatValue());
                     //Criar árvore auxiliar e guardar a rotação
                     Tree aux = new struct node;
-                    aux->g = new Rotate(x,y,z,angle);
+                    aux->g = new Rotate(x,y,z,angle,time);
                     aux->label = "rotate";
                     aux->next.clear();
                     group->next.push_back(aux);

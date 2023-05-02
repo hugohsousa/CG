@@ -1,3 +1,4 @@
+#include <vector>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -6,6 +7,7 @@
 #endif
 
 #include  "classes.h"
+#include "headers/catmull.h"
 #include <string>
 using namespace std;
 
@@ -21,28 +23,112 @@ void Model :: setFile(string f) { file = f; }
 string Model :: getFile() { return file; }
 void Model :: apply() {};
 
-Translate :: Translate() { x = y = z = 0.0f;}
-Translate :: Translate(float x, float y, float z) { setX(x); setY(y); setZ(z); }
+Translate :: Translate() { 
+    x = y = z = time = 0.0f;
+    curve = vector<float>();
+}
+
+Translate :: Translate(float x, float y, float z,float time, vector<float> curve) {
+    setX(x); 
+    setY(y);
+    setZ(z);
+    setTime(time);
+    setCurve(curve);
+}
 void Translate :: setX(float n) { x = n; }
 void Translate :: setY(float n) { y = n; }
 void Translate :: setZ(float n) { z = n; }
+void Translate :: setTime(float n) { time = n; }
+void Translate :: setCurve(vector<float> n) { curve = n; }
 float Translate :: getX() { return x; }
 float Translate :: getY() { return y; }
 float Translate :: getZ() { return z; }
-void Translate :: apply() { glTranslatef(x,y,z); }
+float Translate :: getTime() { return time; }
+vector<vector<float>> Translate :: getCurve(){
 
-Rotate :: Rotate() { x = y = z = angle =0.0f;}
-Rotate :: Rotate(float x, float y, float z, float angle) { setX(x); setY(y); setZ(z); setAngle(angle);}
+    vector<vector<float>> curva;
+
+    for(int i = 0 ; i < (curve.size()/3) ;i++  ){ //i entre 0 e 4
+        vector<float> vaux;
+        for (int j = 0; j <3 ; j++){ //j entre 0 e 3
+            float aux = curve.at((i*3)+j);
+            vaux.push_back(aux);
+        }
+        curva.push_back(vaux);
+        vaux.clear();
+    }
+    return curva;
+}
+void Translate :: apply() { 
+   float time = (glutGet(GLUT_ELAPSED_TIME))/((float) 1000);
+
+    if (time != 0.0f) {
+
+        float pos[4];
+        float deriv[4];
+        float X[4];
+        float Y[4] = {0,1,0};
+        float Z[4];
+
+        //if(render){drawOrbita(translate.getOrbita());}
+
+        float gt = ((getCurve().size())+time)/time;
+
+        getGlobalCatmullRomPoint(gt, pos, deriv, getCurve());
+
+        //cout  << pos[0]  << pos[1]<<pos[2] << endl;
+
+        glTranslatef(pos[0],pos[1],pos[2]);
+
+        X[0] = deriv[0]; X[1] = deriv[1]; X[2] = deriv[2]; X[3] = deriv[3];
+        normalize(X);
+        cross(X, Y, Z);
+
+        // normalize ZZ and get YY
+        normalize(Z);
+        cross(Z, X, Y);
+
+        // normalize YY and up = YY
+        normalize(Y);
+        //memcpy(up, Y, 3 * sizeof(float));
+
+        // build rotation matrix
+        float m[4][4];
+        buildRotMatrix(X, Y, Z, (float*)m);
+        glMultMatrixf((float*)m); 
+    }
+    else {
+        glTranslatef(x,y,z); 
+    }
+}
+
+Rotate :: Rotate() { x = y = z = angle = time = 0.0f;}
+Rotate :: Rotate(float x, float y, float z, float angle, float time) { 
+    setX(x);
+    setY(y);
+    setZ(z);
+    setAngle(angle);
+    setTime(time);
+}
 void Rotate :: setX(float n){ x = n; }
 void Rotate :: setY(float n){ y = n; }
 void Rotate :: setZ(float n){ z = n; }
 void Rotate :: setAngle(int n) { angle = n; }
+void Rotate :: setTime(int n) { time = n; }
 float Rotate :: getX() { return x; }
 float Rotate :: getY() { return y; }
 float Rotate :: getZ() { return z; }
 float Rotate :: getAngle() { return angle; }
-void Rotate :: apply() { glRotatef(angle,x,y,z); }
-
+float Rotate :: getTime() { return time; }
+void Rotate :: apply() { 
+    if(time == 0.0) {
+        glRotatef(angle,x,y,z);
+    }
+    else{
+        float t = (glutGet(GLUT_ELAPSED_TIME))/((float) 1000);
+        glRotatef((t/time)*360,x,y,z);
+    }
+}
 Scale :: Scale() { x = y = z = 0.0f;}
 Scale :: Scale(float x, float y, float z) { setX(x); setY(y); setZ(z); }
 void Scale :: setX(float n) { x = n; }

@@ -10,6 +10,7 @@
 #endif
 
 #include <string>
+#include <vector>
 using namespace std;
 
 class Group {
@@ -36,34 +37,41 @@ class Model : public Group {
 
 class Translate : public Group {
     private:
-        float x,y,z;
+        float x,y,z,time;
+        vector<float> curve;
     public:
         Translate();
-        Translate(float x, float y, float z);
+        Translate(float x, float y, float z,float time,vector<float> curve);
         void setX(float n);
         void setY(float n);
         void setZ(float n);
+        void setTime(float n);
+        void setCurve(vector<float> n);
         float getX();
         float getY();
         float getZ();
+        float getTime();
+        vector<vector<float>> getCurve();
         void apply();
 };
 
 class Rotate : public Group {
     private:
-        float x,y,z,angle;
+        float x,y,z,angle,time;
     public:
         Rotate();
-        Rotate(float x, float y, float z, float angle);
+        Rotate(float x, float y, float z, float angle,float time);
         void setX(float n);
         void setY(float n);
         void setZ(float n);
         void setAngle(int n);
+        void setTime(int n);
         float getX();
         float getY();
         float getZ();
         float getAngle();
-        void apply();
+        float getTime();
+       void apply();
 };
 
 class Scale : public Group {
