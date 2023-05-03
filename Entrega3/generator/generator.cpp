@@ -5,6 +5,99 @@
 #include <cstring>
 
 using namespace std;
+void drawBezier(string patchFile, int tessellation){
+
+    //Abre o .patch para ler
+    ifstream read(patchFile); 
+    //Abre o bezier para escrever
+    ofstream write("../../3d/beziercurve.3d"); 
+    string line, value;
+    int IndLines, pointsLines, nPatches, p1, readCoords;
+    int position;
+
+    float subdiv = 1.0 / tessellation;
+
+    
+    if(read.is_open()){ 
+
+        //primeira linha
+        getline(read, line); 
+        //numero de patches
+        int numPatches = atoi(line.c_str()); 
+        int** indControlPoints = new int*[numPatches]; 
+        float*** finalPoints = new float**[numPatches]; 
+
+        //Indices de cada patch
+        for(IndLines = 0; IndLines < numPatches; IndLines++){
+            getline(read, line);
+            //Array com 16 pontos de controlo
+            indControlPoints[IndLines] = new int[16];
+
+            for(p1 = 0; p1 < 16; p1++){
+                position = line.find(',');
+                value = line.substr(0, position);
+                indControlPoints[IndLines][p1] = atoi(value.c_str());
+                line.erase(0, position + 1);
+            }
+        }
+
+        //Ler numero de pontos 
+        getline(read, line); 
+        int numPoints = atoi(line.c_str());
+        float** points = new float*[numPoints];
+
+
+
+        for(pointsLines = 0; pointsLines < numPoints; pointsLines++){
+            getline(read, line);
+            //array de 3 floats para as coordenadas
+            points[pointsLines] = new float[3]; 
+
+            for(readCoords = 0; readCoords < 3; readCoords++){
+                position = line.find(",");
+                value = line.substr(0, position);
+                points[pointsLines][readCoords] = atof(value.c_str());
+
+                line.erase(0, position + 1);
+            }
+        }
+
+        for(nPatches = 0; nPatches < numPatches; nPatches++){
+            finalPoints[nPatches] = new float*[4];//[32][4]
+
+            for(int lin = 0; lin < tessellation; lin++ ) {
+
+                for(int col = 0; col < tessellation; col++) {
+
+                    float x1 = subdiv * lin;
+                    float y1 = subdiv * col;
+                    float x2 = subdiv * (lin + 1 );
+                    float y2 = subdiv * (col + 1 );
+
+                    finalPoints[nPatches][0] = bezier(x1, y1, points, indControlPoints[nPatches]);
+                    finalPoints[nPatches][1] = bezier(x1, y2, points, indControlPoints[nPatches]);
+                    finalPoints[nPatches][2] = bezier(x2, y1, points, indControlPoints[nPatches]);
+                    finalPoints[nPatches][3] = bezier(x2, y2, points, indControlPoints[nPatches]);
+
+
+                    write << finalPoints[nPatches][0][0] << " " << finalPoints[nPatches][0][1] << " " << finalPoints[nPatches][0][2] << endl;
+                    write << finalPoints[nPatches][2][0] << " " << finalPoints[nPatches][2][1] << " " << finalPoints[nPatches][2][2] << endl;
+                    write << finalPoints[nPatches][3][0] << " " << finalPoints[nPatches][3][1] << " " << finalPoints[nPatches][3][2] << endl;
+
+                    write << finalPoints[nPatches][0][0] << " " << finalPoints[nPatches][0][1] << " " << finalPoints[nPatches][0][2] << endl;
+                    write << finalPoints[nPatches][3][0] << " " << finalPoints[nPatches][3][1] << " " << finalPoints[nPatches][3][2] << endl;
+                    write << finalPoints[nPatches][1][0] << " " << finalPoints[nPatches][1][1] << " " << finalPoints[nPatches][1][2] << endl;
+
+                }
+            }
+        }
+
+        write.close();
+        read.close();
+    } else {
+        printf("Ficheiro.patch Inválido!");
+    }
+}
 
 void drawPlane(float unit, int divisions, string fileName)
 {
@@ -317,6 +410,18 @@ int main(int argc, char *argv[])
         string fileName = string(argv[6]);
         drawCone(radius, height, slices, stacks, fileName);
         return 1;
+    }
+    if (std::strcmp(argv[1], "bezier") == 0) {
+        
+        if (argc != 4) {
+            cout << "\nIntroduza bazier ficheiro.patch tessellation\n";
+            exit(1);
+        }
+        string file = argv[2];
+        int tessellation = (atoi(argv[3]));
+        drawBezier(file, tessellation);
+        return 1;
+        
     }
     else
     {
