@@ -171,12 +171,15 @@ void groupParser(XMLElement *pGroup, Tree group) {
                  //Procurar rotação
                 if(strcmp(pTransform->Value(),"rotate") == 0) {
                     printf("Antes da rotação\n");
+                    if(pTransform->Attribute("angle")) {
+                        angle = float(pTransform->FindAttribute("angle")->FloatValue());
+                    }
+                    if(pTransform->Attribute("time")) {
+                        time = float(pTransform->FindAttribute("time")->FloatValue());
+                    }
                     x = float(pTransform->FindAttribute("x")->FloatValue());
                     y = float(pTransform->FindAttribute("y")->FloatValue());
                     z = float(pTransform->FindAttribute("z")->FloatValue());
-                    angle = float(pTransform->FindAttribute("angle")->FloatValue());
-                    //time = float(pTransform->FindAttribute("time")->FloatValue());
-                    printf("Depois da rotação\n");
                     //Criar árvore auxiliar e guardar a rotação
                     Tree aux = new struct node;
                     aux->g = new Rotate(x,y,z,angle,time);
