@@ -60,10 +60,6 @@ float ang1 = -5000;
 //Verificar se o rato está na janela
 bool mouseCaptured = true; 
 
-//Fps
-int timebase;
-float frames;
-
 // Estrutura para guardar os grupos
 typedef struct node{
     Group* g;
@@ -137,9 +133,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     //Contar o número de pontos >= 4
                     int number = 0;
                     //Parse nos pontos da curva 
-                    printf("Debug1\n");
                     XMLElement *pPoint = pTransform->FirstChildElement();
-                    printf("Debug2\n");
                     vector<float> vertices;
                     if(pPoint != NULL) {
                         while(pPoint != NULL) {
@@ -170,7 +164,6 @@ void groupParser(XMLElement *pGroup, Tree group) {
                 }
                  //Procurar rotação
                 if(strcmp(pTransform->Value(),"rotate") == 0) {
-                    printf("Antes da rotação\n");
                     if(pTransform->Attribute("angle")) {
                         angle = float(pTransform->FindAttribute("angle")->FloatValue());
                     }
@@ -307,11 +300,9 @@ int readXML()
         Tree group = new struct node;
         group->g = new Group(n_group++); 
         group->label = "group";
-        printf("Antes do Grupo\n");
         groupParser(pGroup, group);
         groupTree->next.push_back(group);
         pGroup = pGroup->NextSiblingElement();
-        printf("Depois do grupo\n");
     }
 	return 1;
 }
@@ -475,18 +466,6 @@ void renderScene(void)
 	glVertex3f(0.0f, 0.0f, 100.0f);
 	glEnd();
 
-    //Time
-    frames++;
-    int time = glutGet(GLUT_ELAPSED_TIME);
-    if (time - timebase > 1000) {
-        float fps = frames * 1000.0 / (time - timebase);
-        timebase = time;
-        frames = 0;
-        string str = to_string(fps);
-        const char *c = str.c_str();
-        glutSetWindowTitle(c);
-    }
-
 	// put the geometric transformations here
     readTree(groupTree);
 	// End of frame
@@ -495,7 +474,7 @@ void renderScene(void)
 
 int main(int argc, char **argv)
 {
-    timebase = glutGet(GLUT_ELAPSED_TIME);
+    glutGet(GLUT_ELAPSED_TIME);
 	// Init GLUT and the window 
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DEPTH | GLUT_DOUBLE | GLUT_RGBA);

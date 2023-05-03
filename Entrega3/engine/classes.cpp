@@ -76,9 +76,8 @@ void Translate :: apply() {
         float Z[4];
 
         float gt = ((getCurve().size())+time)/getTime();
-        printf("gt: %f", gt);
         getGlobalCatmullRomPoint(gt, pos, deriv, getCurve());
-
+        renderCatmullRomCurve(getCurve());
         //cout  << pos[0]  << pos[1]<<pos[2] << endl;
 
         glTranslatef(pos[0],pos[1],pos[2]);
