@@ -7,8 +7,8 @@
 #include <GL/glut.h>
 #endif
 
-#include  "classes.h"
-#include "headers/catmull.h"
+#include  "../headers/classes.h"
+#include "../headers/catmull.h"
 #include <string>
 using namespace std;
 

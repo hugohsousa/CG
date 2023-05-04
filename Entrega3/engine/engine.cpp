@@ -15,7 +15,7 @@
 #include <fstream>
 #include <sstream>
 #include <cmath>
-#include "classes.h"
+#include "headers/classes.h"
 #include <tuple>
 
 using namespace tinyxml2;
@@ -228,7 +228,7 @@ int readXML()
 {
 	// Abre File
 	XMLDocument config;
-	XMLError eResult = config.LoadFile("solar.xml");
+	XMLError eResult = config.LoadFile("config.xml");
 
 	// Procura a root do XML
 	XMLElement *pRootElement = config.RootElement();
@@ -467,6 +467,7 @@ void renderScene(void)
 	glEnd();
 
 	// put the geometric transformations here
+	glColor3f(1,1,1);
     readTree(groupTree);
 	// End of frame
 	glutSwapBuffers();
