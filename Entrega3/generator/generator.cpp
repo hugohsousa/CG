@@ -5,6 +5,67 @@
 #include <cstring>
 
 using namespace std;
+float* formulaBezier(float t, float* p0, float* p1, float* p2, float *p3){
+    float* result = new float[3];
+
+    float t1 = (1-t);
+
+    //(1-t)^3
+    float b0 = t1 * t1 * t1; 
+    //3*t*(1-t)^2
+    float b1 = 3 * (t1 * t1) * t;
+    //3*(t^2)*(1-t) 
+    float b2 = 3 * t1 * (t * t); 
+    // t^3
+    float b3 = t * t * t; 
+
+
+    result[0] = b0 * p0[0] + b1 * p1[0] + b2 * p2[0] + b3 * p3[0];
+    result[1] = b0 * p0[1] + b1 * p1[1] + b2 * p2[1] + b3 * p3[1];
+    result[2] = b0 * p0[2] + b1 * p1[2] + b2 * p2[2] + b3 * p3[2];
+
+    return result;
+
+
+}
+
+float* bezier(float n, float m, float** points, int* index){
+    int i;
+    float* point = new float[3];
+    float* result = new float[3];
+    int j = 0;
+    int N = 0;
+    //pontos de controlo
+    float controlPoints[4][3];
+    //pontos da curva de bezier 
+    float bezierPoints[4][3];
+
+    for(i=0; i < 16; i++){
+
+        controlPoints[j][0] = points[index[i]][0];
+        controlPoints[j][1] = points[index[i]][1];
+        controlPoints[j][2] = points[index[i]][2];
+        j++;
+
+        //4 em 4 pontos
+        if(j % 4 == 0){
+
+            //ponto da curva de bezier
+            point = formulaBezier(n, controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3]);
+
+            bezierPoints[N][0] = point[0];
+            bezierPoints[N][1] = point[1];
+            bezierPoints[N][2] = point[2];
+            j = 0;
+            N++;
+        }
+    }
+    
+    result = formulaBezier(m, bezierPoints[0], bezierPoints[1], bezierPoints[2], bezierPoints[3]);
+
+    return result;
+}
+
 void drawBezier(string patchFile, int tessellation){
 
     //Abre o .patch para ler
