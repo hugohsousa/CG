@@ -7,6 +7,10 @@
 		<projection fov="60" near="1" far="1000" />
 	</camera>
     
+    <lights>
+        <light type="DIRECTIONAL" dirX="0" dirY="-1" dirZ="0"/>
+    </lights>
+
     <group>
         <transform>
             <translate time="30.0" align = "true">
@@ -39,7 +43,7 @@
             <scale x="0.2" y="0.2" z="0.2" />
         </transform>
         <models>
-            <model file="beziercurve.3d" />
+            <model file="esfera.3d" />
         </models>
     </group>
 
@@ -48,6 +52,7 @@
 		<group>
 			<models>
 				<model file="esfera.3d" />
+                <texture file="earth.jpg"/>
 			</models>
 		</group>
 		
@@ -168,7 +173,6 @@
 			
 			<models>
 				<model file="esfera.3d" />
-					<texture file="earthmap1k.jpg" />
 			</models>
 			
 			<!--lua-->

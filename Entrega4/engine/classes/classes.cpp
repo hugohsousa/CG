@@ -19,16 +19,15 @@ int Group :: getId() { return id; }
 void Group :: apply() { glPushMatrix(); }
 
 Model :: Model() { file = ""; }
-Model :: Model(string file){ setFile(file); }
+Model :: Model(string file, GLuint t, vector<float> c){ setFile(file); setTexture(t); setColors(c);}
 void Model :: setFile(string f) { file = f; }
+void Model :: setTexture(GLuint t){ this->texture = t; }
+void Model :: setColors (vector<float> c) { this->colors = c; }
+GLuint Model :: getTexture(){return this->texture;}
+vector<float> Model ::getColors() {return this->colors;}
 string Model :: getFile() { return file; }
-void Model :: apply() {};
 
-Texture :: Texture() { file = ""; }
-Texture :: Texture(string file) { setFile(file); }
-void Texture :: setFile(string f) { file = f; }
-string Texture :: getFile() { return file; }
-void Texture :: apply() {};
+void Model :: apply() {};
 
 Translate :: Translate() { 
     x = y = z = time = 0.0f;
@@ -81,6 +80,8 @@ void Translate :: apply() {
         float Y[4] = {0,1,0};
         float Z[4];
 
+        glDisable(GL_LIGHTING);
+
         float gt = ((getCurve().size())+time)/getTime();
         getGlobalCatmullRomPoint(gt, pos, deriv, getCurve());
         renderCatmullRomCurve(getCurve());
@@ -104,6 +105,7 @@ void Translate :: apply() {
         float m[4][4];
         buildRotMatrix(X, Y, Z, (float*)m);
         glMultMatrixf((float*)m); 
+        glEnable(GL_LIGHTING);
     }
     else {
         glTranslatef(x,y,z); 

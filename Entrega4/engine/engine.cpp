@@ -1,4 +1,4 @@
-#include <cstdio>
+#include <IL/il.h>
 #ifdef __APPLE__
 #include <GLUT/glut.h>
 #else
@@ -6,9 +6,6 @@
 #include <stdlib.h>
 #include <GL/glut.h>
 #endif
-
-#include <IL/il.h>
-#include <IL/ilut.h>
 
 #include "tinyxml/tinyxml2.h"
 #include <cstring>
@@ -73,18 +70,37 @@ typedef struct node{
 //File struct
 typedef struct ficheiro{
     string name;
-    vector<float> vertex;
-    GLuint index,size;
+    GLuint size;
+    GLuint indexn;
     GLuint indext;
+    GLuint indexp;
 } *File;
 
+//Texture struct
 typedef struct tex{
     string name;
     GLuint idtext;
 }*Textura;
 
+//Light struct
+typedef struct luz{
+    string type;
+    float pos[4];
+    float dir[4];
+    float diff[4];
+    float amb[4];
+    float spec[4];
+    float cutoff;
+    float exp;
+    float quad;
+    float lin;
+} *Light;
+
 //Texturas
 vector<Textura> texturas;
+
+//Lights
+vector<Light> lights;
 
 //Files
 vector<File> Vbos;
@@ -92,14 +108,13 @@ Tree groupTree;
 int n_group = 0;
 
 int loadindTexture(std::string s) {
-    
     unsigned int t,tw,th;
     unsigned char *texData;
-    unsigned int texID;
+    GLuint texID;
 
     ilInit();
     ilEnable(IL_ORIGIN_SET);
-    ilOriginFunc(IL_ORIGIN_LOWER_LEFT);
+
     ilGenImages(1,&t);
     ilBindImage(t);
     ilLoadImage((ILstring)s.c_str());
@@ -111,19 +126,16 @@ int loadindTexture(std::string s) {
     glGenTextures(1,&texID);
 
     glBindTexture(GL_TEXTURE_2D,texID);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_S,		GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_WRAP_T,		GL_REPEAT);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MAG_FILTER,   	GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D,	GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 
     glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, tw, th, 0, GL_RGBA, GL_UNSIGNED_BYTE, texData);
     glGenerateMipmap(GL_TEXTURE_2D);
 
-    glBindTexture(GL_TEXTURE_2D, 0);
-
     return texID;
-
 }
 
 
@@ -134,12 +146,19 @@ File readFile(string file)
 	// Variáveis
 	float x, y, z;
     float tx, ty;
+    float nx, ny, nz; 
+
 	string linha;
 	ifstream f("../3d/" + file);
+
     File vbo = new struct ficheiro;
     vbo->name = file;
-    vbo->vertex.clear();
+    vector<float> vertexp;
+    vector<float> vertexn;
     vector<float> vertext;
+
+    vertexp.clear();
+    vertexn.clear();
     vertext.clear();
 
     // Abre o ficheiro a ser lido
@@ -150,31 +169,133 @@ File readFile(string file)
         in >> x;
         in >> y;
         in >> z;
+        in >> nx;
+        in >> ny;
+        in >> nz;
         in >> tx;
-        in >> ty;
-        vbo->vertex.push_back(x);
-        vbo->vertex.push_back(y);
-        vbo->vertex.push_back(z);
+        in >> ty;        
+
+        vertexp.push_back(x);
+        vertexp.push_back(y);
+        vertexp.push_back(z);
+
+        vertexn.push_back(nx);
+        vertexn.push_back(ny);
+        vertexn.push_back(nz);
 
         vertext.push_back(tx);
         vertext.push_back(ty);
 	}
 
-    vbo->size = vbo->vertex.size()/3;
+    vbo->size = vertexp.size()/3;
     Vbos.push_back(vbo);
 
     //Criar vbo
-    glGenBuffers(1,&(vbo->index));
-    glBindBuffer(GL_ARRAY_BUFFER,vbo->index);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * (vbo->vertex).size(), vbo->vertex.data(),GL_STATIC_DRAW);
+    glGenBuffers(1, &(vbo->indexp));
+    glBindBuffer(GL_ARRAY_BUFFER, vbo->indexp);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexp.size(), vertexp.data(), GL_STATIC_DRAW);
 
+    //criar vbo
+    glGenBuffers(1,&(vbo->indexn));//copiar vbo para a grafica
+    printf("teste:%f\n",vertexn.data()[1]);
+    glBindBuffer(GL_ARRAY_BUFFER,vbo->indexn);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexn.size(), vertexn.data(),GL_STATIC_DRAW);
+
+    //criar vbo
     glGenBuffers(1,&(vbo->indext));
     glBindBuffer(GL_ARRAY_BUFFER,vbo->indext);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertext.size(), vertext.data(),GL_STATIC_DRAW);
-    
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertext.size(), vertext.data(),GL_STATIC_DRAW);    
+
     f.close();
 
     return vbo;
+}
+
+void lightsParser(XMLElement *grupo){
+    XMLElement* light = grupo->FirstChildElement();
+    while (light != nullptr) {
+        Light luz = new struct luz;
+        luz->pos[3] = 1.0f;
+        luz->dir[3] = 0.0f;
+        luz->diff[0] = 1.0f;
+        luz->diff[1] = 1.0f;
+        luz->diff[2] = 1.0f;
+        luz->diff[3] = 1.0f;
+        luz->amb[0] = 0.2f;
+        luz->amb[1] = 0.2f;
+        luz->amb[2] = 0.2f;
+        luz->amb[3] = 1.0f;
+        luz->spec[0] = 1.0f;
+        luz->spec[1] = 1.0f;
+        luz->spec[2] = 1.0f;
+        luz->spec[3] = 1.0f;
+
+        //Modelo
+        if (light->Attribute("type")) {
+            luz->type = light->Attribute("type");
+        }
+        if (light->Attribute("diffR")) {
+            light->QueryFloatAttribute("diffR", &(luz->diff[0]));
+        }
+        if (light->Attribute("diffG")) {
+            light->QueryFloatAttribute("diffG", &(luz->diff[1]));
+        }
+        if (light->Attribute("diffB")) {
+            light->QueryFloatAttribute("diffB", &(luz->diff[2]));
+        }
+        if (light->Attribute("specR")) {
+            light->QueryFloatAttribute("specR", &(luz->spec[0]));
+        }
+        if (light->Attribute("specG")) {
+            light->QueryFloatAttribute("specG", &(luz->spec[1]));
+        }
+        if (light->Attribute("specB")) {
+            light->QueryFloatAttribute("specB", &(luz->spec[2]));
+        }
+        if (light->Attribute("ambR")) {
+            light->QueryFloatAttribute("ambiR",&(luz->amb[0]));
+        }
+        if (light->Attribute("ambG")) {
+            light->QueryFloatAttribute("ambiG", &(luz->amb[1]));
+        }
+        if (light->Attribute("ambB")) {
+            light->QueryFloatAttribute("ambiB", &(luz->amb[2]));
+        }
+        if (light->Attribute("posX")) {
+            light->QueryFloatAttribute("posX",&(luz->pos[0]));
+        }
+        if (light->Attribute("posY")) {
+            light->QueryFloatAttribute("posY", &(luz->pos[1]));
+        }
+        if (light->Attribute("posZ")) {
+            light->QueryFloatAttribute("posZ", &(luz->pos[2]));
+        }
+        if (light->Attribute("dirX")) {
+            light->QueryFloatAttribute("dirX",&(luz->dir[0]));
+        }
+        if (light->Attribute("dirY")) {
+            light->QueryFloatAttribute("dirY", &(luz->dir[1]));
+        }
+        if (light->Attribute("dirZ")) {
+            light->QueryFloatAttribute("dirZ", &(luz->dir[2]));
+        }
+        if (light->Attribute("cutoff")) {
+            light->QueryFloatAttribute("cutoff", &(luz->cutoff));
+        }
+        if (light->Attribute("exp")) {
+            light->QueryFloatAttribute("exp", &(luz->exp));
+        }
+        if (light->Attribute("lin")) {
+            light->QueryFloatAttribute("lin", &(luz->lin));
+        }
+        if (light->Attribute("quad")) {
+            light->QueryFloatAttribute("quad", &(luz->quad));
+        }
+
+        lights.push_back(luz);
+
+        light = light->NextSiblingElement();
+    }
 }
 
 //Função para parse dos grupos
@@ -256,21 +377,44 @@ void groupParser(XMLElement *pGroup, Tree group) {
                 pTransform = pTransform->NextSiblingElement();
             }
         }
-        //Procurar os ficheiros (modelos)
+        //Procurar os ficheiros (pColor)
 
         if(strcmp(pSubGroup->Value(),"models") == 0){
             XMLElement* pModel = pSubGroup->FirstChildElement("model");
             while(pModel != NULL){
+                //Variáveis auiliares
                 GLuint idTex = -1;
+                string file = "";
                 string texture = "";
+                vector<float> color;
+                for(int j = 0; j <= 12; j++){
+                    color.push_back(-1.0f);
+                }
+                color[0] = 200.0f;color[1] = 200.0f;color[2] = 200.0f;
+                color[3] = 50.0f;color[4] = 50.0f;color[5] = 50.0f;
+                color[6] = 0.0f;color[7] = 0.0f;color[8] = 0.0f;
+                color[9] = 0.0f;color[10] = 0.0f;color[11] = 0.0f;
+                color[12] = 0.0f;
+
                 if (strcmp(pModel->Value(),"model") == 0){
                     const char * model = pModel->FindAttribute("file")->Value();
-                    //Criar árvore auxiliar e guardar o ficheiro (modelo)
-                    Tree aux = new struct node;
-                    aux->g = new Model(string(model));
-                    aux->label = "model";
-                    aux->next.clear();
-                    group->next.push_back(aux);
+                    file = model;
+                    int flag = 0;
+                    File aux;
+
+                    for(File vbo : Vbos){
+                        if(strcmp(model,vbo->name.c_str()) == 0) {
+                            flag = 1;
+                            aux = vbo;
+                            break;
+                        }
+                    }
+
+                    if (flag == 0){
+                        printf("sajdlsad:%s\n",file.c_str());
+                        aux = readFile(file.c_str());
+                        Vbos.push_back(aux);
+                    }
                 }
 
                 if(strcmp(pModel->Value(), "texture") == 0){
@@ -286,7 +430,7 @@ void groupParser(XMLElement *pGroup, Tree group) {
                     }
                     if(find == 0){
                         aux = new struct tex;
-                        aux->idtext = loadindTexture("../Textures" + texture);
+                        aux->idtext = loadindTexture("textures/" + texture);
                         aux->name = texture;
                         texturas.push_back(aux);
                     }
@@ -295,10 +439,72 @@ void groupParser(XMLElement *pGroup, Tree group) {
                 
                 if(strcmp(pModel->Value(), "color") == 0){
                     XMLElement* pColor = pModel->FirstChildElement();
-                    //if (pColor != NULL){}
+
+                    while (pColor != NULL) {
+                        if(strcmp(pColor->Value(),"diffuse") == 0) {
+                            if (pColor->Attribute("R")) {
+                                pColor->QueryFloatAttribute("R", &color[0]);
+                            }
+                            if (pColor->Attribute("G")) {
+                                pColor->QueryFloatAttribute("G", &color[1]);
+                            }
+                            if (pColor->Attribute("B")) {
+                                pColor->QueryFloatAttribute("B", &color[2]);
+                            }
+                        }
+                        if(strcmp(pColor->Value(),"ambient") == 0) {
+                            if (pColor->Attribute("R")) {
+                                pColor->QueryFloatAttribute("R", &color[3]);
+                            }
+                            if (pColor->Attribute("G")) {
+                                pColor->QueryFloatAttribute("G", &color[4]);
+                            }
+                            if (pColor->Attribute("B")) {
+                                pColor->QueryFloatAttribute("B", &color[5]);
+                            }
+                        }
+                        if(strcmp(pColor->Value(),"specular") == 0) {
+                            if (pColor->Attribute("R")) {
+                                pColor->QueryFloatAttribute("R", &color[6]);
+                            }
+                            if (pColor->Attribute("G")) {
+                                pColor->QueryFloatAttribute("G", &color[7]);
+                            }
+                            if (pColor->Attribute("B")) {
+                                pColor->QueryFloatAttribute("B", &color[8]);
+                            }
+                        }
+                        if(strcmp(pColor->Value(),"emissive") == 0) {
+                             if (pColor->Attribute("R")) {
+                                pColor->QueryFloatAttribute("R", &color[9]);
+                            }
+                            if (pColor->Attribute("G")) {
+                                pColor->QueryFloatAttribute("G", &color[10]);
+                            }
+                            if (pColor->Attribute("B")) {
+                                pColor->QueryFloatAttribute("B", &color[11]);
+                            }
+                        }
+                        if(strcmp(pColor->Value(),"shininess") == 0) {
+                            if (pColor->Attribute("value")) {
+                                pColor->QueryFloatAttribute("value", &color[12]);
+                            }
+                        }
+                        pColor = pColor->NextSiblingElement();
+                    }
                 }
                 pModel = pModel->NextSiblingElement();
+                if(pModel == NULL) {
+                    Tree aux = new struct node;
+                    aux->g = new Model(file,idTex,color);
+                    aux->label = "model";
+                    aux->next.clear();
+                    group->next.push_back(aux);
+                }
             }
+        }
+        if(strcmp(pSubGroup->Value(),"group") == 0){
+        lightsParser(pSubGroup);
         }
         //Tratar dos subgroupos
         if(strcmp(pSubGroup->Value(),"group") == 0){
@@ -404,6 +610,7 @@ int readTree(Tree groups) {
     if(groups == NULL) return -1;
 
     for(node *n : groups->next) {
+        
         //Lê os subgroups de forma recursiva
         if(strcmp(n->label.c_str(),"group") == 0){
             glPushMatrix();
@@ -429,19 +636,38 @@ int readTree(Tree groups) {
             for(File vbo : Vbos){
                 if(strcmp((dynamic_cast<Model*>(n->g))->getFile().c_str(),vbo->name.c_str()) == 0) {
                     aux = vbo;
+                    //printf("Found vbo%d\n",aux->indext); 
                     flag = 1;
                     break;
                 }
             }
-
-            if (flag == 0){
-                aux = readFile((dynamic_cast<Model*>(n->g))->getFile().c_str());
-                Vbos.push_back(aux);
-            }
-
-            glBindBuffer(GL_ARRAY_BUFFER,aux->index);
+            vector<float> cor = (dynamic_cast<Model*>(n->g))->getColors();
+            float diff[4] = {cor[0],cor[1],cor[2],1.0f};
+            float amb[4] = {cor[3],cor[4],cor[5],1.0f};
+            float spec[4] = {cor[6],cor[7],cor[8],1.0f};
+            float emi[4] = {cor[9],cor[10],cor[11],1.0f};
+            glMaterialfv(GL_FRONT, GL_AMBIENT, spec);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, amb);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+            glMaterialfv(GL_FRONT, GL_EMISSION, emi);
+            glMaterialf(GL_FRONT, GL_SHININESS, cor[12]);
+            glBindBuffer(GL_ARRAY_BUFFER,aux->indexp);
             glVertexPointer(3,GL_FLOAT,0,0);
-            glDrawArrays(GL_TRIANGLES,0,aux->size);
+
+            glBindBuffer(GL_ARRAY_BUFFER, aux->indexn);
+            glNormalPointer(GL_FLOAT, 0, 0);
+
+            GLuint idTex = (dynamic_cast<Model*>(n->g))->getTexture();
+            if(idTex != -1) {
+                glBindTexture(GL_TEXTURE_2D, idTex);
+                glBindBuffer(GL_ARRAY_BUFFER,aux->indext);
+                glTexCoordPointer(2,GL_FLOAT,0,0);            
+            }
+            glDrawArrays(GL_TRIANGLES, 0, aux->size);
+
+            glBindTexture(GL_TEXTURE_2D, 0);
+            float clear[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+            glMaterialfv(GL_FRONT, GL_EMISSION, clear);
 
         }
     }
@@ -528,9 +754,40 @@ void processMouse(int x, int y) {
     }	
 }
 
+void setLights() {
+    for(int i = 0; i < fmin(8,lights.size()); i++){
+        Light luz = lights[i];
+        if(strcmp(luz->type.c_str(),"DIRECTIONAL") != 0) {
+            glLightfv(GL_LIGHT0 + i, GL_POSITION, luz->pos);
+        }
+    }
+}
+
+void drawAxis() {
+    glDisable(GL_LIGHTING);
+
+    glBegin(GL_LINES);
+    // X axis in red
+    glColor3f(1.0f, 0.0f, 0.0f);
+    glVertex3f(-100.0f, 0.0f, 0.0f);
+    glVertex3f(100.0f, 0.0f, 0.0f);
+    // Y Axis in Green
+    glColor3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, -100.0f, 0.0f);
+    glVertex3f(0.0f, 100.0f, 0.0f);
+    // Z Axis in Blue
+    glColor3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, -100.0f);
+    glVertex3f(0.0f, 0.0f, 100.0f);
+    glEnd();
+
+    glEnable(GL_LIGHTING);
+}
+
 
 void renderScene(void)
 {
+    setLights();
     
 	// clear buffers
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -541,23 +798,8 @@ void renderScene(void)
 			  px + lx, py + ly, pz + lz,
 			  ux, uy, uz);
 
-    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 	// put axis drawing in here
-	glBegin(GL_LINES);
-	// X axis in red
-	glColor3f(1.0f, 0.0f, 0.0f);
-	glVertex3f(-100.0f, 0.0f, 0.0f);
-	glVertex3f(100.0f, 0.0f, 0.0f);
-	// Y Axis in Green
-	glColor3f(0.0f, 1.0f, 0.0f);
-	glVertex3f(0.0f, -100.0f, 0.0f);
-	glVertex3f(0.0f, 100.0f, 0.0f);
-	// Z Axis in Blue
-	glColor3f(0.0f, 0.0f, 1.0f);
-	glVertex3f(0.0f, 0.0f, -100.0f);
-	glVertex3f(0.0f, 0.0f, 100.0f);
-	glEnd();
-
+    drawAxis();
 	// put the geometric transformations here
 	glColor3f(1,1,1);
     readTree(groupTree);
@@ -565,26 +807,52 @@ void renderScene(void)
 	glutSwapBuffers();
 }
 
+void initLights(){
+    for(int i = 0; i < fmin(8,lights.size()); i++){
+        Light light = lights[i];
+        glEnable(GL_LIGHT0+i);
+        glLightfv(GL_LIGHT0 + i, GL_AMBIENT, light->amb);
+        glLightfv(GL_LIGHT0 + i, GL_DIFFUSE, light->diff);
+        glLightfv(GL_LIGHT0 + i, GL_SPECULAR, light->spec);
+
+        if(strcmp((light->type).c_str(),"POINT") == 0){
+            glLightf(GL_LIGHT0 + i,  GL_LINEAR_ATTENUATION, light->lin);
+            glLightf(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, light->quad);
+        }
+        if(strcmp((light->type).c_str(),"DIRECTIONAL") == 0){
+            glLightfv(GL_LIGHT0 + i,GL_SPOT_DIRECTION, light->dir);
+        }
+        if(strcmp((light->type).c_str(),"SPOT") == 0){
+            glLightfv(GL_LIGHT0 + i, GL_SPOT_DIRECTION, light->dir);
+            glLightf(GL_LIGHT0 + i, GL_SPOT_CUTOFF, light->cutoff);
+            glLightf(GL_LIGHT0 + i,GL_SPOT_EXPONENT, light->exp);
+            glLightf(GL_LIGHT0 + i, GL_LINEAR_ATTENUATION, light->lin);
+            glLightf(GL_LIGHT0 + i, GL_QUADRATIC_ATTENUATION, light->quad);
+        }
+    }
+}
+
 void initGL(){
-    
+
     readXML();
-
-    //glEnable(GL_LIGHTING);
-
-    //initLights();
-
-    //glEnable(GL_DEPTH_TEST);
-    //glEnable(GL_CULL_FACE);
-    //glEnable(GL_NORMALIZE);
-    //glEnableClientState(GL_VERTEX_ARRAY);
-    //glEnableClientState(GL_NORMAL_ARRAY);
-    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+    
+    glEnable(GL_LIGHTING);
+    glEnable(GL_RESCALE_NORMAL);
     glEnable(GL_TEXTURE_2D);
 
+    initLights();
+
+    glEnableClientState(GL_VERTEX_ARRAY);
+    glEnableClientState(GL_NORMAL_ARRAY);
+    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_CULL_FACE);
 }
 
 int main(int argc, char **argv)
 {
+
     glutGet(GLUT_ELAPSED_TIME);
 	// Init GLUT and the window 
 	glutInit(&argc, argv);
@@ -593,25 +861,20 @@ int main(int argc, char **argv)
 	glutInitWindowSize(wWidth, wHeight);
 	window = glutCreateWindow("CG@DI-UM");
     
-    glewInit();
-    readXML();
-    //initGL();
-
 	// Required callback registry
 	glutDisplayFunc(renderScene);
     glutIdleFunc(renderScene);
 	glutReshapeFunc(changeSize);
+
+    glewInit();
+    ilInit();
+    initGL();
 
 	// put here the registration of the keyboard callbacks
 	glutSpecialFunc(processSpecialKeys);
 	glutKeyboardFunc(processNormalKeys);
     glutPassiveMotionFunc(processMouse);
     
-	//  OpenGL settings
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_CULL_FACE);	
-    glEnableClientState(GL_VERTEX_ARRAY);
-
 	// enter GLUT's main cycle
 	glutMainLoop();
 }

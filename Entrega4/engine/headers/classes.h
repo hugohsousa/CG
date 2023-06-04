@@ -1,5 +1,6 @@
 #ifndef MAIN_CPP_CLASSES_H
 #define MAIN_CPP_CLASSES_H
+#include <GL/gl.h>
 #endif //MAIN_CPP_CLASSES_H
 
 #ifdef __APPLE__
@@ -9,6 +10,7 @@
 #include <GL/glut.h>
 #endif
 
+#include "catmull.h"
 #include <string>
 #include <vector>
 using namespace std;
@@ -27,23 +29,18 @@ class Group {
 class Model : public Group {
     private:
         string file;
+        GLuint texture;
+        vector<float> colors;
     public:
         Model();
-        Model(string file);
+        Model(string file, GLuint t, vector<float> c);
         void setFile(string f);
         string getFile();
+        void setTexture(GLuint t);
+        GLuint getTexture();
+    	void setColors(vector<float> c);
+        vector<float> getColors();
         void apply();
-};
-
-class Texture : public Group{
-    private:
-    	string file;
-    public:
-    	Texture();
-    	Texture(string file);
-    	void setFile(string f);
-    	string getFile();
-    	void apply();
 };
 
 class Translate : public Group {
