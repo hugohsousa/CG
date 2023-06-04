@@ -8,7 +8,7 @@
 	</camera>
     
     <lights>
-        <light type="DIRECTIONAL" dirX="0" dirY="-1" dirZ="0"/>
+        <light type="point" posx="0" posy="0" posz="0"/>
     </lights>
 
     <group>
@@ -43,7 +43,7 @@
             <scale x="0.2" y="0.2" z="0.2" />
         </transform>
         <models>
-            <model file="esfera.3d" />
+            <model file="beziercurve.3d" />
         </models>
     </group>
 
@@ -52,7 +52,10 @@
 		<group>
 			<models>
 				<model file="esfera.3d" />
-                <texture file="earth.jpg"/>
+                <texture file="sun.jpg"/>
+				<color>
+					<emissive R="255" G="255" B="255"/>
+				</color>
 			</models>
 		</group>
 		
@@ -92,6 +95,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="mercury.jpg" />
 				
 			</models>
 		
@@ -133,6 +137,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="venus.jpg" />
 			</models>
 		
 		</group>
@@ -173,6 +178,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="terra.jpg" />
 			</models>
 			
 			<!--lua-->
@@ -224,7 +230,7 @@
 					<point x="-1.294095226" y ="0" z="-9.659258263" />
 					<point x="-0.0" y ="0" z="-10.0" />
 					<point x="1.294095226" y ="0" z="-9.659258263" />
-					<point x="2.5" y ="0" z="-8.660254038" />
+					=<point x="2.5" y ="0" z="-8.660254038" />
 					<point x="3.535533906" y ="0" z="-7.071067812" />
 					<point x="4.330127019" y ="0" z="-5.0" />
 					<point x="4.829629131" y ="0" z="-2.588190451" />
@@ -237,6 +243,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="mars.jpg" />
 			</models>
 		
 		</group>
@@ -277,6 +284,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="jupiter.jpg" />
 			</models>
 			
 			<!--lua-->
@@ -320,6 +328,7 @@
 				
 				<models>
 					<model file="esfera.3d" />
+					
 				</models>
 			</group>
 			
@@ -403,6 +412,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="saturn.jpg" />
 			</models>
 		</group>
 		
@@ -443,6 +453,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="uranus.jpg" />
 			</models>
 			
 			<!--lua-->
@@ -549,6 +560,7 @@
 			
 			<models>
 				<model file="esfera.3d" />
+				<texture file="neptune.jpg" />
 			</models>
 			
 			<!--lua-->

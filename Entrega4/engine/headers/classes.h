@@ -16,32 +16,10 @@
 using namespace std;
 
 class Group {
-    private:
-        int id;
     public:
-        Group();
-        Group(int id);
-        void setId(int n);
-        int getId();
-        virtual void apply();
+    void virtual apply() = 0;
 };
 
-class Model : public Group {
-    private:
-        string file;
-        GLuint texture;
-        vector<float> colors;
-    public:
-        Model();
-        Model(string file, GLuint t, vector<float> c);
-        void setFile(string f);
-        string getFile();
-        void setTexture(GLuint t);
-        GLuint getTexture();
-    	void setColors(vector<float> c);
-        vector<float> getColors();
-        void apply();
-};
 
 class Translate : public Group {
     private:
@@ -99,3 +77,87 @@ class Scale : public Group {
         float getZ();
         void apply();
 };
+
+class Color{
+    public:
+        void virtual apply() = 0;
+};
+
+class Diffuse : public Color {
+    float rgb[4];
+    public:
+        Diffuse(float r, float g, float b);
+        void apply();
+};
+
+class Ambient : public Color {
+    float rgb[4];
+    public:
+        Ambient(float r, float g, float b);
+        void apply();
+};
+
+class Specular : public Color {
+    float rgb[4];
+    public:
+        Specular(float r, float g, float b);
+        void apply();
+};
+
+class Emissive : public Color {
+    float rgb[4];
+    public:
+        Emissive(float r, float g, float b);
+        void apply();
+};
+
+class Shininess : public Color {
+    float s;
+    public:
+        Shininess(float t);
+        void apply();
+};
+
+class Model {
+    public:
+    string model;
+    GLuint texture;
+    vector<Group*> transformations;
+    vector<Color*> colors;
+    GLuint vertices, verticeCount, normals, textures;
+    public:
+        Model();
+        Model(string model, vector<Group*> t, vector<Color*>, GLuint texture);
+        string getModel();
+        void setVbo(GLuint v, GLuint n, GLuint t, GLuint s);
+        void draw();
+};
+
+class Light{
+    public:
+        int index;
+        void virtual apply() = 0;
+};
+
+class LightPoint : public Light {
+    float pos[4];
+    public:
+        LightPoint(float a, float b, float c, int i);
+        void apply();
+};
+
+class LightDirectional : public Light{
+    float dir[4];
+    public:
+        LightDirectional(float a, float b, float c, int i);
+        void apply();
+};
+
+class LightSpotlight : public Light{
+    float pos[4], dir[4], cutoff;
+    public:
+        LightSpotlight(float a, float b, float c, float da, float db, float dc, float ct, int i);
+        void apply();
+};
+
+int getLight(int nLight);

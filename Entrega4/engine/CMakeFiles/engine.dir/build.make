@@ -140,8 +140,7 @@ engine: CMakeFiles/engine.dir/tinyxml/tinyxml2.cpp.o
 engine: CMakeFiles/engine.dir/classes/classes.cpp.o
 engine: CMakeFiles/engine.dir/classes/catmull.cpp.o
 engine: CMakeFiles/engine.dir/build.make
-engine: /usr/lib64/libOpenGL.so
-engine: /usr/lib64/libGLX.so
+engine: /usr/lib64/libGL.so
 engine: /usr/lib64/libGLU.so
 engine: /usr/lib64/libglut.so
 engine: /usr/lib64/libGLEW.so

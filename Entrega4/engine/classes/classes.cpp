@@ -4,7 +4,9 @@
 #include <GLUT/glut.h>
 #else
 #include <stdlib.h>
+#include <GL/glew.h>
 #include <GL/glut.h>
+#include <IL/il.h>
 #endif
 
 #include  "../headers/classes.h"
@@ -12,22 +14,6 @@
 #include <string>
 using namespace std;
 
-Group :: Group(int id) { setId(id); }
-Group :: Group() { id = 0; }
-void Group :: setId(int n) { id = n; }
-int Group :: getId() { return id; }
-void Group :: apply() { glPushMatrix(); }
-
-Model :: Model() { file = ""; }
-Model :: Model(string file, GLuint t, vector<float> c){ setFile(file); setTexture(t); setColors(c);}
-void Model :: setFile(string f) { file = f; }
-void Model :: setTexture(GLuint t){ this->texture = t; }
-void Model :: setColors (vector<float> c) { this->colors = c; }
-GLuint Model :: getTexture(){return this->texture;}
-vector<float> Model ::getColors() {return this->colors;}
-string Model :: getFile() { return file; }
-
-void Model :: apply() {};
 
 Translate :: Translate() { 
     x = y = z = time = 0.0f;
@@ -148,3 +134,167 @@ float Scale :: getX() { return x; }
 float Scale :: getY() { return y; }
 float Scale :: getZ() { return z; }
 void Scale :: apply() { glScalef(x,y,z); }
+
+
+Diffuse::Diffuse(float r, float g, float b) {
+    this->rgb[0] = r;
+    this->rgb[1] = g;
+    this->rgb[2] = b;
+    this->rgb[3] = 1.0f;
+}
+
+void Diffuse::apply() {
+    glMaterialfv(GL_FRONT, GL_DIFFUSE, this->rgb);
+}
+
+Ambient::Ambient(float r, float g, float b) {
+    this->rgb[0] = r;
+    this->rgb[1] = g;
+    this->rgb[2] = b;
+    this->rgb[3] = 1.0f;
+}
+
+void Ambient::apply() {
+    glMaterialfv(GL_FRONT, GL_AMBIENT, this->rgb);
+}
+
+Specular::Specular(float r, float g, float b) {
+    this->rgb[0] = r;
+    this->rgb[1] = g;
+    this->rgb[2] = b;
+    this->rgb[3] = 1.0f;
+}
+
+void Specular::apply() {
+    glMaterialfv(GL_FRONT, GL_SPECULAR, this->rgb);
+}
+
+Emissive::Emissive(float r, float g, float b) {
+    this->rgb[0] = r;
+    this->rgb[1] = g;
+    this->rgb[2] = b;
+    this->rgb[3] = 1.0f;
+}
+
+void Emissive::apply() {
+    glMaterialfv(GL_FRONT, GL_EMISSION, this->rgb);
+}
+
+Shininess::Shininess(float r) {
+    this->s = r;
+}
+
+void Shininess::apply() {
+    glMaterialf(GL_FRONT, GL_SHININESS, this->s);
+}
+
+Model::Model(string model, vector<Group*> t, vector<Color*> b, GLuint texture) {
+    this->model = model;
+    this->texture = texture;
+    this->transformations = t;
+    this->colors = b;
+}
+
+Model::Model() {}
+
+string Model::getModel() {
+    return this->model;
+}
+
+void Model::setVbo(GLuint v, GLuint n, GLuint t, GLuint s) {
+    this->vertices = v;
+    this->normals = n;
+    this->textures = t;
+    this->verticeCount = s;
+}
+
+void Model::draw() {
+        glPushMatrix();
+        for (Group* t : this->transformations) {
+            t->apply();
+        }
+        for (Color* c : this->colors) {
+            c->apply();
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, vertices);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, normals);
+        glNormalPointer(GL_FLOAT, 0, 0);
+        
+        if (this->texture != -1) {
+            glBindTexture(GL_TEXTURE_2D, this->texture);
+
+            glBindBuffer(GL_ARRAY_BUFFER, textures);
+            glTexCoordPointer(2, GL_FLOAT, 0, 0);
+        }
+
+        glDrawArrays(GL_TRIANGLES, 0, this->verticeCount);
+
+        float clear[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        glMaterialfv(GL_FRONT, GL_EMISSION, clear);
+        
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glPopMatrix();
+}
+
+LightPoint::LightPoint(float a, float b, float c, int i) {
+    this->pos[0] = a;
+    this->pos[1] = b;
+    this->pos[2] = c;
+    this->pos[3] = 1.0f;
+    this->index = getLight(i);
+}
+
+void LightPoint::apply() {
+    glLightfv(this->index, GL_POSITION, this->pos);
+}
+
+LightDirectional::LightDirectional(float a, float b, float c, int i) {
+    this->dir[0] = a;
+    this->dir[1] = b;
+    this->dir[2] = c;
+    this->dir[3] = 0.0f;
+    this->index = getLight(i);
+}
+
+void LightDirectional::apply() {
+    glLightfv(this->index, GL_POSITION, this->dir);
+}
+
+LightSpotlight::LightSpotlight(float a, float b, float c, float da, float db, float dc, GLfloat ct, int i) {
+    this->pos[0] = a;
+    this->pos[1] = b;
+    this->pos[2] = c;
+    this->pos[3] = 1.0f;
+    this->dir[0] = da;
+    this->dir[1] = db;
+    this->dir[2] = dc;
+    this->dir[3] = 0.0f;
+    this->cutoff = ct;
+    this->index = getLight(i);
+}
+
+void LightSpotlight::apply() {
+    glLightfv(this->index, GL_POSITION, this->pos);
+    glLightfv(this->index, GL_SPOT_DIRECTION, this->dir);
+    glLightfv(this->index, GL_SPOT_CUTOFF, &(this->cutoff));
+}
+
+int getLight(int nLight) {
+    int CLight;
+    switch (nLight) {
+        case 0: CLight = GL_LIGHT0; break;
+        case 1: CLight = GL_LIGHT1; break;
+        case 2: CLight = GL_LIGHT2; break;
+        case 3: CLight = GL_LIGHT3; break;
+        case 4: CLight = GL_LIGHT4; break;
+        case 5: CLight = GL_LIGHT5; break;
+        case 6: CLight = GL_LIGHT6; break;
+        case 7: CLight = GL_LIGHT7; break;
+        default: exit(1);
+    }
+    return CLight;
+}
+
