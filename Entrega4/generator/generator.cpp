@@ -3,6 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <cstring>
+#include <vector>
 
 using namespace std;
 float* formulaBezier(float t, float* p0, float* p1, float* p2, float *p3){
@@ -302,112 +303,91 @@ void drawCone(float radius, float height, int slices, int stacks, string fileNam
     fileCone.close();
 }
 
-void drawSphere(float radius, int slices, int stacks, string fileName)
-{
-    ofstream fileSphere(fileName, ofstream::trunc);
+void drawSphere(float radius, int slices, int stacks, string fileName) {
 
-    float stackStep = M_PI / stacks;
-    float sliceStep = 2 * M_PI / slices;
+    ofstream fileSphere(fileName, ios::trunc );
 
-    float a = 0.0f;
-    float b = M_PI / 2;
+    float stackStep = (float) M_PI / stacks;
+    float sliceStep = 2 * (float) M_PI / slices;
 
-    float p1x = 0.0f;
-    float p1y = 0.0f;
-    float p1z = 0.0f;
+    float alpha = 0.0f;         
+    float betha = (float) M_PI / 2;        
 
-    float p2x = 0.0f;
-    float p2y = 0.0f;
-    float p2z = 0.0f;
+    float p1x;
+    float p1y;
+    float p1z;
 
-    float p3x = 0.0f;
-    float p3y = radius * sin(b);
-    float p3z = 0.0f;
+    float p2x;
+    float p2y;
+    float p2z;
 
-    float p4x = 0.0f;
-    float p4y = 0.0f;
-    float p4z = 0.0f;
+    float p3x;
+    float p3y;
+    float p3z;
 
-    b -= stackStep;
+    float p4x;
+    float p4y;
+    float p4z;
 
-    //Primeira stack
-    for (int j = 0; j < slices; j++) {
-        a = j * sliceStep;
+    vector<float> textura, normais;
 
-        p1x = radius * cos(b) * sin(a);
-        p1y = radius * sin(b);
-        p1z = radius * cos(b) * cos(a);
+    float textureX;
+    float textureY;
 
-        p2x = radius * cos(b) * sin(a + sliceStep);
-        p2y = radius * sin(b);
-        p2z = radius * cos(b) * cos(a + sliceStep);
+    for (int i = 0; i < stacks ; i++) {
 
-        fileSphere << p1x << " " << p1y << " " << p1z << endl;
-        fileSphere << p2x << " " << p2y << " " << p2z << endl;
-        fileSphere << p3x << " " << p3y << " " << p3z << endl;
+        alpha = 0.0f;
+        betha = (float) M_PI / 2 - i * stackStep;
 
-    }
-    //Stacks
-    for (int i = 1; i < stacks - 1; i++) {
-
-        a = 0.0f;
-        b = M_PI / 2 - i * stackStep;
+        textureY = ((float)i/(float)stacks);
 
         for (int j = 0; j < slices; j++) {
-            a = j * sliceStep;
 
-            p3x = radius * cos(b) * sin(a);
-            p3y = radius * sin(b);
-            p3z = radius * cos(b) * cos(a);
+            textureX = (float) j / (float) slices;
 
-            p4x = radius * cos(b) * sin(a + sliceStep);
-            p4y = radius * sin(b);
-            p4z = radius * cos(b) * cos(a + sliceStep);
+            alpha = j * sliceStep;
 
-            p2x = radius * cos(b - stackStep) * sin(a + sliceStep);
-            p2y = radius * sin(b - stackStep);
-            p2z = radius * cos(b - stackStep) * cos(a + sliceStep);
+            p3x = radius * cos(betha) * sin(alpha);
+            p3y = radius * sin(betha);
+            p3z = radius * cos(betha) * cos(alpha);
 
-            p1x = radius * cos(b - stackStep) * sin(a);
-            p1y = radius * sin(b - stackStep);
-            p1z = radius * cos(b - stackStep) * cos(a);
+            p4x = radius * cos(betha) * sin(alpha + sliceStep);
+            p4y = radius * sin(betha);
+            p4z = radius * cos(betha) * cos(alpha + sliceStep);
 
-            fileSphere << p1x << " " << p1y << " " << p1z << endl;
-            fileSphere << p2x << " " << p2y << " " << p2z << endl;
-            fileSphere << p4x << " " << p4y << " " << p4z << endl;
+            p2x = radius * cos(betha - stackStep) * sin(alpha + sliceStep);
+            p2y = radius * sin(betha - stackStep);
+            p2z = radius * cos(betha - stackStep) * cos(alpha + sliceStep);
 
-            fileSphere << p1x << " " << p1y << " " << p1z << endl;
-            fileSphere << p4x << " " << p4y << " " << p4z << endl;
-            fileSphere << p3x << " " << p3y << " " << p3z << endl;
+            p1x = radius * cos(betha - stackStep) * sin(alpha);
+            p1y = radius * sin(betha - stackStep);
+            p1z = radius * cos(betha - stackStep) * cos(alpha);
+
+            // vertice
+            // normal
+            // textura
+
+            fileSphere << p1x << " " << p1y << " " << p1z << " "  << p1x/radius << " " << p1y/radius << " " << p1z/radius << " "<<(asin( p1x/radius) /(float)M_PI) + 0.5  << " " << (asin(p1y/radius) /(float)M_PI) + 0.5 << " "  << endl;
+
+            fileSphere << p2x << " " << p2y << " " << p2z  << " "<< p2x/radius << " " << p2y/radius << " " << p2z/radius << " "  <<  (asin( p2x/radius) /(float)M_PI) + 0.5 << " " << (asin(p2y/radius) /(float)M_PI) + 0.5 << " "  << endl;
+
+            fileSphere << p4x << " " << p4y << " " << p4z << " " << p4x/radius << " " << p4y/radius << " " << p4z/radius << " "  << (asin( p4x/radius) /(float)M_PI) + 0.5 << " " << (asin(p4y/radius) /(float)M_PI) + 0.5 << " "  << endl;
+
+
+
+            fileSphere << p1x << " " << p1y << " " << p1z << " "  << p1x/radius << " " << p1y/radius << " " << p1z/radius << " "<< (asin(p1x/radius) /(float) M_PI) + 0.5  << " " << (asin(p1y/radius) /(float)M_PI) + 0.5 << " "  << endl;
+
+            fileSphere << p4x << " " << p4y << " " << p4z << " " << p4x/radius << " " << p4y/radius << " " << p4z/radius << " "  << (asin(p4x/radius) /(float) M_PI) + 0.5 << " " << (asin(p4y/radius) /(float)M_PI) + 0.5<< " "  << endl;
+
+            fileSphere << p3x << " " << p3y << " " << p3z << " " << p3x/radius << " " << p3y/radius << " " << p3z/radius << " " << (asin(p3x/radius) / (float) M_PI) + 0.5 << " " << (asin(p3y/radius) /(float)M_PI) + 0.5<< " " << endl;
+
 
         }
     }
 
-    b = M_PI / 2 - (stacks - 1)*stackStep;
-
-    p3x = 0.0f;
-    p3y = radius * sin(b - stackStep);
-    p3z = 0.0f;
-    //Última stack
-	for (int j = 0; j < slices; j++) {
-        a = j * sliceStep;
-
-        p1x = radius * cos(b) * sin(a);
-        p1y = radius * sin(b);
-        p1z = radius * cos(b) * cos(a);
-
-        p2x = radius * cos(b) * sin(a + sliceStep);
-        p2y = radius * sin(b);
-        p2z = radius * cos(b) * cos(a + sliceStep);
-
-        fileSphere << p1x << " " << p1y << " " << p1z << endl;
-        fileSphere << p3x << " " << p3y << " " << p3z << endl;
-        fileSphere << p2x << " " << p2y << " " << p2z << endl;
-
-    }
-
     fileSphere.close();
 }
+
 
 int main(int argc, char *argv[])
 {
