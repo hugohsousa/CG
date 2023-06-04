@@ -1,3 +1,0 @@
-/home/naho/Documentos/CG/CG/Entrega4/engine/CMakeFiles/engine.dir
-/home/naho/Documentos/CG/CG/Entrega4/engine/CMakeFiles/edit_cache.dir
-/home/naho/Documentos/CG/CG/Entrega4/engine/CMakeFiles/rebuild_cache.dir

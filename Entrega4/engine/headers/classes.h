@@ -120,17 +120,13 @@ class Shininess : public Color {
 
 class Model {
     public:
-    string model;
-    GLuint texture;
-    vector<Group*> transformations;
-    vector<Color*> colors;
-    GLuint vertices, verticeCount, normals, textures;
-    public:
+        string model;
+        GLuint texture;
+        vector<Group*> transformations;
+        vector<Color*> colors;
+        GLuint vertices, verticeCount, normals, textures;
         Model();
         Model(string model, vector<Group*> t, vector<Color*>, GLuint texture);
-        string getModel();
-        void setVbo(GLuint v, GLuint n, GLuint t, GLuint s);
-        void draw();
 };
 
 class Light{

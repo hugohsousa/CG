@@ -197,48 +197,6 @@ Model::Model(string model, vector<Group*> t, vector<Color*> b, GLuint texture) {
 
 Model::Model() {}
 
-string Model::getModel() {
-    return this->model;
-}
-
-void Model::setVbo(GLuint v, GLuint n, GLuint t, GLuint s) {
-    this->vertices = v;
-    this->normals = n;
-    this->textures = t;
-    this->verticeCount = s;
-}
-
-void Model::draw() {
-        glPushMatrix();
-        for (Group* t : this->transformations) {
-            t->apply();
-        }
-        for (Color* c : this->colors) {
-            c->apply();
-        }
-
-        glBindBuffer(GL_ARRAY_BUFFER, vertices);
-        glVertexPointer(3, GL_FLOAT, 0, 0);
-        
-        glBindBuffer(GL_ARRAY_BUFFER, normals);
-        glNormalPointer(GL_FLOAT, 0, 0);
-        
-        if (this->texture != -1) {
-            glBindTexture(GL_TEXTURE_2D, this->texture);
-
-            glBindBuffer(GL_ARRAY_BUFFER, textures);
-            glTexCoordPointer(2, GL_FLOAT, 0, 0);
-        }
-
-        glDrawArrays(GL_TRIANGLES, 0, this->verticeCount);
-
-        float clear[4] = {0.0f, 0.0f, 0.0f, 1.0f};
-        glMaterialfv(GL_FRONT, GL_EMISSION, clear);
-        
-        glBindTexture(GL_TEXTURE_2D, 0);
-        glPopMatrix();
-}
-
 LightPoint::LightPoint(float a, float b, float c, int i) {
     this->pos[0] = a;
     this->pos[1] = b;

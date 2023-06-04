@@ -18,7 +18,6 @@
 #include <cmath>
 #include "headers/classes.h"
 #include <tuple>
-#include <map>
 
 using namespace tinyxml2;
 using namespace std;
@@ -63,15 +62,7 @@ float ang1 = -5000;
 bool mouseCaptured = true; 
 
 // Estrutura para guardar os modelos
-vector<Model> models;
-map<std::string, std::vector<float>> modelPoints;
-map<std::string, std::vector<float>> modelNormals;
-map<std::string, std::vector<float>> modelTextures;
-map<std::string, GLuint> modelBufferPoints;
-map<std::string, GLuint> modelBufferNormals;
-map<std::string, GLuint> modelBufferTextures;
-map<std::string, GLuint> textureTextureId;
-
+std::vector<Model> models;
 
 //File struct
 typedef struct ficheiro{
@@ -96,9 +87,8 @@ vector<Light*> lights;
 
 //Files
 vector<File> Vbos;
-int n_group = 0;
 
-int loadingTexture(std::string s) {
+int loadindTexture(std::string s) {
     unsigned int t,tw,th;
     unsigned char *texData;
     GLuint texID;
@@ -108,10 +98,7 @@ int loadingTexture(std::string s) {
 
     ilGenImages(1,&t);
     ilBindImage(t);
-    if (!ilLoadImage((ILstring)s.c_str())) {
-        printf("Error - Texture file not found: %s\n", s.data());
-        exit(1);
-    }
+    ilLoadImage((ILstring)s.c_str());
     tw = ilGetInteger(IL_IMAGE_WIDTH);
     th = ilGetInteger(IL_IMAGE_HEIGHT);
     ilConvertImage(IL_RGBA, IL_UNSIGNED_BYTE);
@@ -134,32 +121,74 @@ int loadingTexture(std::string s) {
 
 
 //Função que lê os ficheiros e desenha os vértices
-void readFile(string file,vector<float> &points, vector<float> &normals, vector<float> &textures)
+File readFile(string file)
 {
     
 	// Variáveis
 	float x, y, z;
     float tx, ty;
     float nx, ny, nz; 
+
+	string linha;
 	ifstream f("../3d/" + file);
 
+    File vbo = new struct ficheiro;
+    vbo->name = file;
+    vector<float> vertexp;
+    vector<float> vertexn;
+    vector<float> vertext;
+
+    vertexp.clear();
+    vertexn.clear();
+    vertext.clear();
+
     // Abre o ficheiro a ser lido
-    while (f >> x >> y >> z >> nx >> ny >> nz >> tx >> ty)
+    while (std::getline(f, linha))
     {
         // Lê os pontos linha a linha e adiciona os vértices
-        points.push_back(x);
-        points.push_back(y);
-        points.push_back(z);
+        istringstream in(linha);
+        in >> x;
+        in >> y;
+        in >> z;
+        in >> nx;
+        in >> ny;
+        in >> nz;
+        in >> tx;
+        in >> ty;        
 
-        normals.push_back(nx);
-        normals.push_back(ny);
-        normals.push_back(nz);
+        vertexp.push_back(x);
+        vertexp.push_back(y);
+        vertexp.push_back(z);
 
-        textures.push_back(tx);
-        textures.push_back(ty);	
-    }
+        vertexn.push_back(nx);
+        vertexn.push_back(ny);
+        vertexn.push_back(nz);
+
+        vertext.push_back(tx);
+        vertext.push_back(ty);
+	}
+
+    vbo->size = vertexp.size()/3;
+    Vbos.push_back(vbo);
+
+    //Criar vbo
+    glGenBuffers(1, &(vbo->indexp));
+    glBindBuffer(GL_ARRAY_BUFFER, vbo->indexp);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexp.size(), vertexp.data(), GL_STATIC_DRAW);
+
+    //criar vbo
+    glGenBuffers(1,&(vbo->indexn));//copiar vbo para a grafica
+    glBindBuffer(GL_ARRAY_BUFFER,vbo->indexn);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertexn.size(), vertexn.data(),GL_STATIC_DRAW);
+
+    //criar vbo
+    glGenBuffers(1,&(vbo->indext));
+    glBindBuffer(GL_ARRAY_BUFFER,vbo->indext);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(float) * vertext.size(), vertext.data(),GL_STATIC_DRAW);    
 
     f.close();
+
+    return vbo;
 }
 
 
@@ -168,24 +197,24 @@ void lightsParser(XMLElement *grupo){
     GLuint lightIndex = 0;
     while (light != NULL) {
         if (strcmp(light->Attribute("type"),"point")==0) {
-            float x = atof(light->Attribute("posx"));
-            float y = atof(light->Attribute("posy"));
-            float z = atof(light->Attribute("posz"));
+            float x = atof(light->Attribute("posX"));
+            float y = atof(light->Attribute("posY"));
+            float z = atof(light->Attribute("posZ"));
 
             lights.push_back(new LightPoint(x, y, z, lightIndex));
-        } else if (strcmp(light->Value(),"DIRECTIONAL")==0) {
-            float dirx = atof(light->Attribute("dirx"));
-            float diry = atof(light->Attribute("diry"));
-            float dirz = atof(light->Attribute("dirz"));
+        } else if (strcmp(light->Attribute("type"),"directional")==0) {
+            float dirx = atof(light->Attribute("dirX"));
+            float diry = atof(light->Attribute("dirY"));
+            float dirz = atof(light->Attribute("dirZ"));
 
             lights.push_back(new LightDirectional(dirx, diry, dirz, lightIndex));
-        } else if (strcmp(light->Value(),"SPOTLIGHT")==0) {
-            float x = atof(light->Attribute("posx"));
-            float y = atof(light->Attribute("posy"));
-            float z = atof(light->Attribute("posz"));
-            float dirx = atof(light->Attribute("dirx"));
-            float diry = atof(light->Attribute("diry"));
-            float dirz = atof(light->Attribute("dirz"));
+        } else if (strcmp(light->Attribute("type"),"spotlight")==0) {
+            float x = atof(light->Attribute("posX"));
+            float y = atof(light->Attribute("posY"));
+            float z = atof(light->Attribute("posZ"));
+            float dirx = atof(light->Attribute("dirX"));
+            float diry = atof(light->Attribute("dirY"));
+            float dirz = atof(light->Attribute("dirZ"));
             float cutoff = atof(light->Attribute("cutoff"));
 
             lights.push_back(new LightSpotlight(x, y, z, dirx, diry, dirz, cutoff, lightIndex));
@@ -266,38 +295,54 @@ void groupParser(XMLElement *pGroup, vector<Group*> group) {
         //Procurar os ficheiros (pColor)
 
         if(strcmp(pSubGroup->Value(),"models") == 0){
-            XMLElement* pModel = pSubGroup->FirstChildElement("model");
+            //Variáveis auiliares
             GLuint idTex = -1;
+            string file = "";
             string texture = "";
             vector<Color*> color;
             float r,g,b,s;
+
+            XMLElement* pModel = pSubGroup->FirstChildElement("model");
             while(pModel != NULL){
-                //Variáveis auiliares
 
                 if (strcmp(pModel->Value(),"model") == 0){
                     const char * model = pModel->FindAttribute("file")->Value();
                     file = model;
-                    if(!modelPoints.count(model)){
-                        std::vector<float> points, normals, textures;
+                    int flag = 0;
+                    File aux;
 
-                        readFile(model, points, normals, textures);
-                        modelPoints[model] = points;
-                        modelNormals[model] = normals;
-                        modelTextures[model] = textures;
+                    for(File vbo : Vbos){
+                        if(strcmp(model,vbo->name.c_str()) == 0) {
+                            flag = 1;
+                            aux = vbo;
+                            break;
+                        }
                     }
-                }                
+
+                    if (flag == 0){
+                        aux = readFile(file.c_str());
+                        Vbos.push_back(aux);
+                    }
+                }
 
                 if(strcmp(pModel->Value(), "texture") == 0){
                     int find = 0;
+                    Textura aux;
                     texture = pModel->Attribute("file");
-                    if(!textureTextureId.count(texture)){
-                        idTex = loadingTexture("textures/"+texture);
-                        textureTextureId[texture] = idTex;
+                    for(Textura t : texturas){
+                        if(strcmp(texture.c_str(),t->name.c_str()) == 0){
+                            find = 1;
+                            aux = t;
+                            break;
+                        }
                     }
-                    else
-                        idTex = textureTextureId[texture];
-
-                    printf("textura:%d\n",idTex);
+                    if(find == 0){
+                        aux = new struct tex;
+                        aux->idtext = loadindTexture("textures/" + texture);
+                        aux->name = texture;
+                        texturas.push_back(aux);
+                    }
+                    idTex = aux->idtext;
                 }
                 
 
@@ -364,7 +409,6 @@ void groupParser(XMLElement *pGroup, vector<Group*> group) {
                 }
                 pModel = pModel->NextSiblingElement();
                 if(pModel == NULL) {
-                    printf("%s:%d:\n",file.c_str(),idTex);
                     models.push_back(Model(file,group,color,idTex));
                 }
             }
@@ -461,9 +505,54 @@ int readXML()
 }
 
 //Função que lê a estrutura de dados e desenha a cena
-int readTree() {
+int draw() {
     for(Model m : models) {
-        m.draw();
+        File aux;
+        for(File v : Vbos) {
+            if(m.model==v->name) {
+                aux = v;
+                break;
+            }
+        }
+
+        glPushMatrix();
+        for (Group* t : m.transformations) {
+            t->apply();
+        }
+        if(m.colors.size() != 0) {
+            for (Color* c : m.colors) {
+                c->apply();
+            }
+        } else {
+            float diff[4] = {200.0f, 200.0f, 200.0f, 1.0f};
+            float spec[4] = {50.0f, 50.0f, 50.0f, 1.0f};
+            float amb[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+            float emi[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+            glMaterialfv(GL_FRONT, GL_AMBIENT, amb);
+            glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
+            glMaterialfv(GL_FRONT, GL_DIFFUSE, diff);
+            glMaterialfv(GL_FRONT, GL_EMISSION, emi);
+            glMaterialf(GL_FRONT, GL_SHININESS, 128.0f);
+        }
+
+        glBindBuffer(GL_ARRAY_BUFFER, aux->indexp);
+        glVertexPointer(3, GL_FLOAT, 0, 0);
+        
+        glBindBuffer(GL_ARRAY_BUFFER, aux->indexn);
+        glNormalPointer(GL_FLOAT, 0, 0);
+        
+        if (m.texture != -1) {
+            glBindTexture(GL_TEXTURE_2D, m.texture);
+
+            glBindBuffer(GL_ARRAY_BUFFER, aux->indext);
+            glTexCoordPointer(2, GL_FLOAT, 0, 0);
+        }
+        glDrawArrays(GL_TRIANGLES, 0, aux->size);
+
+        float clear[4] = {0.0f, 0.0f, 0.0f, 1.0f};
+        glMaterialfv(GL_FRONT, GL_EMISSION, clear);
+        glBindTexture(GL_TEXTURE_2D, 0);
+        glPopMatrix();
     }
     return 1;
 }
@@ -570,6 +659,21 @@ void drawAxis() {
 }
 
 void initLights(){
+
+    float dark[4] = {0.3, 0.3, 0.3, 1.0};
+    float white[4] = {1.0, 1.0, 1.0, 1.0};
+    // float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    for (Light* l: lights) {
+        glEnable(l->index);
+        
+        // light colors
+        glLightfv(l->index, GL_AMBIENT, dark);
+        glLightfv(l->index, GL_DIFFUSE, white);
+        glLightfv(l->index, GL_SPECULAR, white);
+
+    }
+
     for (Light* l: lights) {
         l->apply();
     }
@@ -589,15 +693,21 @@ void renderScene(void)
 	// put axis drawing in here
     drawAxis();
 	// put the geometric transformations here
-	glColor3f(1,1,1);
 
     initLights(); 
 
-    readTree();
+    glColor3f(1,1,1);
+    draw();
 	// End of frame
 	glutSwapBuffers();
 }
 
+
+void initGL(){
+    glEnable(GL_LIGHTING);
+    glEnable(GL_RESCALE_NORMAL);
+    glEnable(GL_TEXTURE_2D);
+}
 
 int main(int argc, char **argv)
 {
@@ -611,9 +721,7 @@ int main(int argc, char **argv)
 	window = glutCreateWindow("CG@DI-UM");
     
 	// Required callback registry
-    glEnable(GL_LIGHTING);
-    glEnable(GL_RESCALE_NORMAL);
-    glEnable(GL_TEXTURE_2D);
+    initGL();
 
 	glutDisplayFunc(renderScene);
     glutIdleFunc(renderScene);
@@ -624,65 +732,14 @@ int main(int argc, char **argv)
 
     readXML();
 
-    float dark[4] = {0.3, 0.3, 0.3, 1.0};
-    float white[4] = {1.0, 1.0, 1.0, 1.0};
-    // float black[4] = {0.0f, 0.0f, 0.0f, 0.0f};
-
-    for (Light* l: lights) {
-        glEnable(l->index);
-        
-        // light colors
-        glLightfv(l->index, GL_AMBIENT, dark);
-        glLightfv(l->index, GL_DIFFUSE, white);
-        glLightfv(l->index, GL_SPECULAR, white);
-
-        // glLightModelfv(GL_LIGHT_MODEL_AMBIENT, black);
-    }
-
     glEnableClientState(GL_VERTEX_ARRAY);
     glEnableClientState(GL_NORMAL_ARRAY);
     glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 
 	// put here the registration of the keyboard callbacks
-
-    GLuint buffers[modelPoints.size() + modelNormals.size() + modelTextures.size()];
-
-    glGenBuffers(modelPoints.size() + modelNormals.size() + modelTextures.size(), buffers);
-
-    int i = 0;
-    for (std::pair<std::string, std::vector<float>> element : modelPoints) {
-        std::string model = element.first;
-        std::vector<float> points = element.second;
-        std::vector<float> normals = modelNormals[model];
-        std::vector<float> textures = modelTextures[model];
-        modelBufferPoints[model] = buffers[i];
-        modelBufferNormals[model] = buffers[i + modelPoints.size()];
-        modelBufferTextures[model] = buffers[i + modelPoints.size() + modelTextures.size()];
-        glBindBuffer(GL_ARRAY_BUFFER, modelBufferPoints[model]);
-        glBufferData(GL_ARRAY_BUFFER, points.size() * sizeof(float), points.data(), GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, modelBufferNormals[model]);
-        glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
-
-        glBindBuffer(GL_ARRAY_BUFFER, modelBufferTextures[model]);
-        glBufferData(GL_ARRAY_BUFFER, textures.size() * sizeof(float), textures.data(), GL_STATIC_DRAW);
-        i++;
-    }
-
-    for(Model & group : models){
-        group.vertices = modelBufferPoints[group.model];
-        group.normals = modelBufferNormals[group.model];
-        group.textures = modelBufferTextures[group.model];
-        group.verticeCount = modelPoints[group.model].size();
-    }
-
-
-    glutSpecialFunc(processSpecialKeys);
-    glutKeyboardFunc(processNormalKeys);
+	glutSpecialFunc(processSpecialKeys);
+	glutKeyboardFunc(processNormalKeys);
     glutPassiveMotionFunc(processMouse);
-
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_CULL_FACE);
     
 	// enter GLUT's main cycle
 	glutMainLoop();

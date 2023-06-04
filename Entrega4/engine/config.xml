@@ -8,7 +8,7 @@
 	</camera>
     
     <lights>
-        <light type="point" posx="0" posy="0" posz="0"/>
+        <light type="point" posX="0" posY="0" posZ="0"/>
     </lights>
 
     <group>
@@ -40,10 +40,11 @@
 		<point x="3.863703305" y ="0" z="-4.141104722" />
 
             </translate>
-            <scale x="0.2" y="0.2" z="0.2" />
+            <scale x="0.1" y="0.1" z="0.1" />
         </transform>
         <models>
             <model file="beziercurve.3d" />
+            <texture file="teapot.jpg"/>
         </models>
     </group>
 
